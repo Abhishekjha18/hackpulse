@@ -1,0 +1,35 @@
+DOGFOOD 2026 acceptance report
+portal: http://localhost:3001/api/v1
+claimed: T1 T2 T3 T4
+note: fixtures.json was not found, so the fixture content check will fail. Put it next to run.py or pass its path.
+
+T1  gallery is public ................. FAIL
+       GET http://localhost:3001/api/v1/events/d06f00d0-0000-4000-8000-000000000000/gallery
+       no auth header
+       got no response, wanted 200
+T1  project from fixtures shown ....... FAIL
+       GET http://localhost:3001/api/v1/events/d06f00d0-0000-4000-8000-000000000000/gallery
+       no fixture file was loaded, so there was nothing to look for
+T1  closed event refuses submissions .. FAIL
+       POST http://localhost:3001/api/v1/events/d06f00d0-0000-4000-8000-000000000000/submissions
+       sent as participant; the fixture event closed in the past
+       got no response, wanted 4xx
+T2  judge sees own scores ............. FAIL
+       GET http://localhost:3001/api/v1/judging/scores/d06f00d0-0000-4000-8000-00000000a001
+       sent as judge_a
+       got no response, wanted 200
+T2  judge cannot see peer scores ...... FAIL
+       GET http://localhost:3001/api/v1/judging/scores/d06f00d0-0000-4000-8000-00000000a001
+       sent as judge_b; this is the url that returns judge_a's scores
+       got no response, wanted 401 or 403
+T2  participant blocked ............... FAIL
+       GET http://localhost:3001/api/v1/judging/scores/d06f00d0-0000-4000-8000-00000000a001
+       sent as participant
+       got no response, wanted 401 or 403
+T2  csv export works .................. FAIL
+       GET http://localhost:3001/api/v1/events/d06f00d0-0000-4000-8000-000000000000/export/scores.csv
+       sent as organizer
+       got no response, wanted 200
+
+claimed T1 T2 T3 T4, verified nothing
+note: claimed but not verified: T1 T2 T3 T4
