@@ -7,9 +7,16 @@ import { AuthModule } from "./auth/auth.module";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { DatabaseModule } from "./db/database.module";
 import { HealthModule } from "./health/health.module";
+import { UsersModule } from "./users/users.module";
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, AuthModule, HealthModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    DatabaseModule,
+    AuthModule,
+    HealthModule,
+    UsersModule,
+  ],
   providers: [
     // Order matters: AuthGuard resolves request.user first, RolesGuard
     // then authorizes against it (ARCHITECTURE.md §6).
