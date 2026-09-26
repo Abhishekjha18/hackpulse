@@ -1,0 +1,39 @@
+{
+  "name": "@hackpulse/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HackPulse web frontend — a client of @hackpulse/api, nothing more.",
+  "scripts": {
+    "predev": "pnpm --filter @hackpulse/shared run build",
+    "dev": "next dev",
+    "prebuild": "pnpm --filter @hackpulse/shared run build",
+    "build": "next build",
+    "start": "next start",
+    "prelint": "pnpm --filter @hackpulse/shared run build",
+    "lint": "next lint",
+    "pretypecheck": "pnpm --filter @hackpulse/shared run build",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"(no tests yet)\""
+  },
+  "dependencies": {
+    "@hackpulse/shared": "workspace:*",
+    "@tanstack/react-query": "^5.59.0",
+    "next": "^14.2.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.11",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.15",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.6.3"
+  }
+}
