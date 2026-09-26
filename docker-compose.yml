@@ -7,7 +7,11 @@ services:
       POSTGRES_PASSWORD: hackpulse_dev_only
       POSTGRES_DB: hackpulse
     ports:
-      - "5432:5432"
+      # Host port 5433 avoids clashing with a pre-existing local Postgres on
+      # 5432. Containers on this compose network still reach it at
+      # postgres:5432 (the service name), so this only affects host-side
+      # tools (local `pnpm db:migrate`, psql, etc.).
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
