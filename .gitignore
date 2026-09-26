@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test / coverage
+coverage/
+.nyc_output/
+.jscpd-report/
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# Husky's generated internal shim, not the hooks themselves
+.husky/_
+Thumbs.db
+
+# Local tool state (not part of the project)
+.claude/
+.tokensave/
+.superpowers/
+
+# Docker volumes mounted locally
+docker/volumes/
+
+# Runtime-generated files (rendered certificate PDFs)
+apps/api/data/
+
+# Generated certs / keys used only for local dev
+*.pem
+*.key
+!docker/dev-keys/README.md
