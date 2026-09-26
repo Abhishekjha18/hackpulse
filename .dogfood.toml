@@ -1,0 +1,33 @@
+[portal]
+base_url = "http://localhost:3001/api/v1"
+
+[tiers]
+claimed = ["T1", "T2", "T3", "T4"]
+pitch = "A self-hosted, API-first hackathon submission-and-judging portal with backend-enforced role isolation and a defensible normalization method."
+
+[auth]
+# Real Better Auth session cookies for the four accounts load-fixtures.ts
+# creates, signed the same way a browser sign-in would be, printed by the
+# api container at boot. These rotate on every fresh `docker compose up`
+# against a clean volume — before rerunning run.py after a fresh boot,
+# search the api container's logs ("Test logins") and paste in whatever
+# it just printed.
+organizer   = "Cookie: __Secure-hackpulse.session_token=IvwqkjGLyDvlJ1AeX7BITkMeOFLunD4p.R6Bvy0XC%2BkqionKekMy8gKDcVw5KY%2Br%2FlNTkmLccop8%3D"
+judge_a     = "Cookie: __Secure-hackpulse.session_token=FX6JjMHtshqMkkThqnNM4woK6vSc8b4s.tZQ224U%2FJXS%2FIbCfi8KxCcXWucEx9F6Z3kPui2P4Tr0%3D"
+judge_b     = "Cookie: __Secure-hackpulse.session_token=c5bMKLsVkGzHt7vljmxgUoebuF87xqpq.2%2FR6LeJX3DHYyD8voN1RqoqJQWwN9ezViSaHXrICcIg%3D"
+participant = "Cookie: __Secure-hackpulse.session_token=8ovFwGhc0GDJ2baN0WzYXXmaaCQ5YCaJ.h9e5h41luvtRm0loZr3HovLR4Jp%2BTIayJkYok698nAE%3D"
+
+[routes]
+# All four point at the fixture-backed event load-fixtures.ts creates on
+# boot. The event id and the judge_a assignment id are pinned, not
+# Postgres's usual random uuids, so these five lines stay correct across
+# every future reboot — only [auth] above ever needs refreshing.
+gallery      = "/events/d06f00d0-0000-4000-8000-000000000000/gallery"
+submit       = "/events/d06f00d0-0000-4000-8000-000000000000/submissions"
+# judge_scores and peer_scores are deliberately the same url: one real
+# assignment (dogfood-judge-a's completed score on fixtures.json's prj_01,
+# "Glass Signal"), read as its own judge (200) vs. as dogfood-judge-b, who
+# is scoped to the same track but never assigned this submission (401/403).
+judge_scores = "/judging/scores/d06f00d0-0000-4000-8000-00000000a001"
+peer_scores  = "/judging/scores/d06f00d0-0000-4000-8000-00000000a001"
+csv_export   = "/events/d06f00d0-0000-4000-8000-000000000000/export/scores.csv"
