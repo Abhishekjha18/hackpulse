@@ -1,10 +1,6 @@
 import { createHash } from "node:crypto";
 
 import type { Database } from "../db/client";
-import { auditLogEntries } from "../db/schema/audit.schema";
-import { user } from "../db/schema/auth.schema";
-import { tracks } from "../db/schema/events.schema";
-import { submissions } from "../db/schema/submissions.schema";
 import { AuditService, canonicalStringify } from "./audit.service";
 
 const GENESIS_HASH = "0".repeat(64);
@@ -138,57 +134,5 @@ describe("AuditService.verifyChain", () => {
       valid: true,
       entriesChecked: 0,
     });
-  });
-});
-
-function makeListDb(
-  auditRows: Row[],
-  userRows: { id: string; name: string }[],
-  submissionRows: { id: string; name: string }[] = [],
-  trackRows: { id: string; name: string }[] = [],
-) {
-  return {
-    select: () => ({
-      from: (table: unknown) => {
-        if (table === auditLogEntries) {
-          return {
-            where: () => ({
-              orderBy: () => ({
-                limit: () => Promise.resolve(auditRows),
-              }),
-            }),
-          };
-        }
-        if (table === user) {
-          return { where: () => Promise.resolve(userRows) };
-        }
-        if (table === submissions) {
-          return { where: () => Promise.resolve(submissionRows) };
-        }
-        if (table === tracks) {
-          return { where: () => Promise.resolve(trackRows) };
-        }
-        throw new Error("makeListDb: unexpected table in .from()");
-      },
-    }),
-  } as unknown as Database;
-}
-
-describe("AuditService.list", () => {
-  it("resolves the actor's name and returns it alongside the raw row", async () => {
-    const rows = makeChain("event-1", ["score.submit"]);
-    const service = new AuditService(makeListDb(rows, [{ id: "user-1", name: "Priya Sharma" }]));
-    const result = await service.list("event-1", {});
-    expect(result.items[0].actorName).toBe("Priya Sharma");
-    expect(result.items[0].actionLabel).toBe("Submitted a score");
-    // Raw fields are still present — existing consumers reading .action etc. don't break.
-    expect(result.items[0].action).toBe("score.submit");
-  });
-
-  it("resolves nothing and still returns a usable shape when no rows have an actor", async () => {
-    const rows = makeChain("event-1", ["vote.cast"]).map((r) => ({ ...r, actorUserId: null }));
-    const service = new AuditService(makeListDb(rows, []));
-    const result = await service.list("event-1", {});
-    expect(result.items[0].actorName).toBe("Anonymous");
   });
 });

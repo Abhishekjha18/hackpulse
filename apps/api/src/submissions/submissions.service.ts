@@ -33,7 +33,6 @@ import {
 } from "../db/schema";
 import { loadSubmissionWithEvent } from "../db/submission-lookups";
 import { DB } from "../db/tokens";
-import { WebhooksService } from "../webhooks/webhooks.service";
 
 // FR-ABUSE-02 — a normalized content fingerprint, not a verbatim hash: two
 // submissions that differ only in whitespace/casing (a copy-paste with
@@ -119,7 +118,6 @@ export type DuplicateGroup =
 export class SubmissionsService {
   constructor(
     @Inject(DB) private readonly db: Database,
-    private readonly webhooks: WebhooksService,
     private readonly rateLimiter: RateLimiterService,
     private readonly audit: AuditService,
   ) {}
@@ -411,13 +409,6 @@ export class SubmissionsService {
       .set({ status: "submitted", submittedAt: new Date(), updatedAt: new Date() })
       .where(eq(submissions.id, submissionId))
       .returning();
-
-    await this.webhooks.trigger(event.id, "submission.received", {
-      submissionId: updated.id,
-      name: updated.name,
-      trackId: updated.trackId,
-      submittedAt: updated.submittedAt,
-    });
 
     return updated;
   }
