@@ -23,6 +23,7 @@ import {
 import { DB } from "../db/tokens";
 import { NormalizationService } from "../judging/normalization.service";
 import { VotingService } from "../voting/voting.service";
+import { WebhooksService } from "../webhooks/webhooks.service";
 
 @Injectable()
 export class ResultsService {
@@ -31,6 +32,7 @@ export class ResultsService {
     private readonly normalization: NormalizationService,
     private readonly voting: VotingService,
     private readonly audit: AuditService,
+    private readonly webhooks: WebhooksService,
   ) {}
 
   // Requested explicitly: a rubric's own rankings are always event-wide
@@ -279,6 +281,11 @@ export class ResultsService {
       resourceType: "event",
       resourceId: eventId,
       metadata: {},
+    });
+
+    await this.webhooks.trigger(eventId, "results.published", {
+      eventId,
+      resultsPublishAt: updated.resultsPublishAt,
     });
 
     return updated;
