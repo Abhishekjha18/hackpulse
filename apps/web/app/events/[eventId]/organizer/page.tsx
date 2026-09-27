@@ -1,6 +1,6 @@
 "use client";
 
-import type { Event, Rubric, RubricCriterion, Track } from "@hackpulse/shared";
+import type { Event, Prize, Rubric, RubricCriterion, Track } from "@hackpulse/shared";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -35,6 +35,7 @@ export default function OrganizerPage() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [rubrics, setRubrics] = useState<RubricWithCriteria[]>([]);
   const [judges, setJudges] = useState<JudgeRow[]>([]);
+  const [prizes, setPrizes] = useState<Prize[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -54,6 +55,10 @@ export default function OrganizerPage() {
     api
       .get<JudgeRow[]>(`/events/${eventId}/judges`)
       .then(setJudges)
+      .catch(() => {});
+    api
+      .get<Prize[]>(`/events/${eventId}/prizes`)
+      .then(setPrizes)
       .catch(() => {});
   };
 
@@ -108,6 +113,7 @@ export default function OrganizerPage() {
             eventId={eventId}
             tracks={tracks}
             rubrics={rubrics}
+            prizes={prizes}
             onChange={load}
             onError={setError}
           />
@@ -283,18 +289,23 @@ function SetupTab({
   eventId,
   tracks,
   rubrics,
+  prizes,
   onChange,
   onError,
 }: {
   eventId: string;
   tracks: Track[];
   rubrics: RubricWithCriteria[];
+  prizes: Prize[];
   onChange: () => void;
   onError: (msg: string) => void;
 }) {
   const [trackName, setTrackName] = useState("");
   const [rubricName, setRubricName] = useState("");
   const [criterionRows, setCriterionRows] = useState([{ name: "", weight: "1" }]);
+  const [prizeName, setPrizeName] = useState("");
+  const [prizeTrackId, setPrizeTrackId] = useState("");
+  const [prizeWinnerCount, setPrizeWinnerCount] = useState(1);
   const [busy, setBusy] = useState(false);
 
   async function createTrack(e: React.FormEvent) {
@@ -326,6 +337,38 @@ function SetupTab({
       onChange();
     } catch (err) {
       onError(err instanceof ApiError ? err.message : "Failed to add rubric");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function createPrize(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await api.post(`/events/${eventId}/prizes`, {
+        name: prizeName,
+        trackId: prizeTrackId || null,
+        winnerCount: prizeWinnerCount,
+      });
+      setPrizeName("");
+      setPrizeTrackId("");
+      setPrizeWinnerCount(1);
+      onChange();
+    } catch (err) {
+      onError(err instanceof ApiError ? err.message : "Failed to add prize");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removePrize(prizeId: string) {
+    setBusy(true);
+    try {
+      await api.delete(`/events/${eventId}/prizes/${prizeId}`);
+      onChange();
+    } catch (err) {
+      onError(err instanceof ApiError ? err.message : "Failed to remove prize");
     } finally {
       setBusy(false);
     }
@@ -419,6 +462,70 @@ function SetupTab({
             className="block rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium hover:bg-surface-alt disabled:opacity-50"
           >
             Create rubric
+          </button>
+        </form>
+      </div>
+
+      <div>
+        <h2 className="text-h2 font-semibold text-ink">Prizes</h2>
+        <ul className="mt-3 space-y-2 text-sm text-ink">
+          {prizes.map((p) => (
+            <li key={p.id} className="flex items-center justify-between gap-2">
+              <span>
+                {p.name}{" "}
+                <span className="text-muted">
+                  ({p.winnerCount} winner{p.winnerCount !== 1 ? "s" : ""}
+                  {p.trackId ? `, ${tracks.find((t) => t.id === p.trackId)?.name ?? "track"}` : ""})
+                </span>
+              </span>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => removePrize(p.id)}
+                className="text-xs text-danger hover:underline disabled:opacity-50"
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+        <form onSubmit={createPrize} className="mt-4 space-y-2">
+          <input
+            required
+            placeholder="Prize name"
+            value={prizeName}
+            onChange={(e) => setPrizeName(e.target.value)}
+            className="w-full rounded-md border border-line px-3 py-2 text-sm"
+          />
+          <select
+            value={prizeTrackId}
+            onChange={(e) => setPrizeTrackId(e.target.value)}
+            className="w-full rounded-md border border-line px-3 py-2 text-sm"
+          >
+            <option value="">Overall (no track)</option>
+            {tracks.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium tracking-wide text-muted">Winners</label>
+            <input
+              required
+              type="number"
+              min={1}
+              value={prizeWinnerCount}
+              onChange={(e) => setPrizeWinnerCount(Math.max(1, Number(e.target.value) || 1))}
+              className="w-20 rounded-md border border-line px-3 py-2 text-sm"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={busy}
+            className="rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium hover:bg-surface-alt disabled:opacity-50"
+          >
+            Add prize
           </button>
         </form>
       </div>
