@@ -6,6 +6,11 @@ import { useEffect, useState } from "react";
 
 import { api, ApiError } from "../../../../lib/api";
 
+const GALLERY_VISIBILITIES = ["open", "participants_only", "hidden"] as const;
+const VOTING_MODES = ["disabled", "single_vote", "quadratic"] as const;
+const VOTING_ACCESS_LEVELS = ["open_link", "email_gated", "authenticated"] as const;
+const SCORING_MODES = ["rubric", "pairwise"] as const;
+
 type TabId = "overview" | "setup" | "judges" | "results";
 const TABS: { id: TabId; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -122,6 +127,53 @@ export default function OrganizerPage() {
   );
 }
 
+function EventSettingSelect({
+  label,
+  testId,
+  eventId,
+  field,
+  value,
+  options,
+  onSaved,
+  onError,
+}: {
+  label: string;
+  testId: string;
+  eventId: string;
+  field: string;
+  value: string;
+  options: readonly string[];
+  onSaved: (e: Event) => void;
+  onError: (msg: string) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-medium tracking-wide text-muted">{label}</label>
+      <select
+        data-testid={testId}
+        value={value}
+        onChange={async (e) => {
+          try {
+            const updated = await api.patch<Event>(`/events/${eventId}`, {
+              [field]: e.target.value,
+            });
+            onSaved(updated);
+          } catch (err) {
+            onError(err instanceof ApiError ? err.message : "Failed to save");
+          }
+        }}
+        className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
+      >
+        {options.map((v) => (
+          <option key={v} value={v}>
+            {v.replace(/_/g, " ")}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function OverviewTab({
   event,
   onSaved,
@@ -180,6 +232,49 @@ function OverviewTab({
           Save
         </button>
       </form>
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <EventSettingSelect
+          label="Scoring mode"
+          testId="event-scoring-select"
+          eventId={event.id}
+          field="scoringMode"
+          value={event.scoringMode}
+          options={SCORING_MODES}
+          onSaved={onSaved}
+          onError={onError}
+        />
+        <EventSettingSelect
+          label="Gallery visibility"
+          testId="event-gallery-select"
+          eventId={event.id}
+          field="galleryVisibility"
+          value={event.galleryVisibility}
+          options={GALLERY_VISIBILITIES}
+          onSaved={onSaved}
+          onError={onError}
+        />
+        <EventSettingSelect
+          label="Voting mode"
+          testId="event-voting-select"
+          eventId={event.id}
+          field="votingMode"
+          value={event.votingMode}
+          options={VOTING_MODES}
+          onSaved={onSaved}
+          onError={onError}
+        />
+        <EventSettingSelect
+          label="Voting access"
+          testId="event-voting-access-select"
+          eventId={event.id}
+          field="votingAccess"
+          value={event.votingAccess}
+          options={VOTING_ACCESS_LEVELS}
+          onSaved={onSaved}
+          onError={onError}
+        />
+      </div>
     </div>
   );
 }
