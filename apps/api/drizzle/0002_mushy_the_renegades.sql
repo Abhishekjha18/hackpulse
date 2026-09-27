@@ -1,0 +1,1 @@
+ALTER TABLE "events" ADD COLUMN "max_team_size" integer DEFAULT 4 NOT NULL;
