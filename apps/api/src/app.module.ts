@@ -6,7 +6,11 @@ import { AuthGuard } from "./auth/auth.guard";
 import { AuthModule } from "./auth/auth.module";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { DatabaseModule } from "./db/database.module";
+import { EventsModule } from "./events/events.module";
+import { GalleryModule } from "./gallery/gallery.module";
 import { HealthModule } from "./health/health.module";
+import { SubmissionsModule } from "./submissions/submissions.module";
+import { TeamsModule } from "./teams/teams.module";
 import { UsersModule } from "./users/users.module";
 
 @Module({
@@ -16,6 +20,10 @@ import { UsersModule } from "./users/users.module";
     AuthModule,
     HealthModule,
     UsersModule,
+    EventsModule,
+    TeamsModule,
+    SubmissionsModule,
+    GalleryModule,
   ],
   providers: [
     // Order matters: AuthGuard resolves request.user first, RolesGuard
