@@ -33,6 +33,63 @@ services:
       timeout: 5s
       retries: 10
 
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Runtime role — cannot UPDATE/DELETE audit_log_entries (ADR-009).
+      DATABASE_URL: postgres://hackpulse_app:hackpulse_app_dev_only@postgres:5432/hackpulse
+      # Schema-owning role — migrations only.
+      MIGRATION_DATABASE_URL: postgres://hackpulse:hackpulse_dev_only@postgres:5432/hackpulse
+      REDIS_URL: redis://redis:6379
+      PORT: "3001"
+      BETTER_AUTH_SECRET: dev-only-change-me-dev-only-change-me
+      BETTER_AUTH_URL: http://localhost:3001
+      PUBLIC_API_URL: http://localhost:3001
+      WEB_ORIGIN: http://localhost:3000
+      CERTIFICATES_DIR: /repo/apps/api/data/certificates
+    ports:
+      - "3001:3001"
+    volumes:
+      - certdata:/repo/apps/api/data/certificates
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3001/api/v1/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      # Server-side (Next.js rewrite target) — reaches `api` over the
+      # compose network, not the host-mapped port.
+      HACKPULSE_API_URL: http://api:3001
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    ports:
+      - "3000:3000"
+
 volumes:
   pgdata:
   redisdata:
+  certdata:
