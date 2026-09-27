@@ -9,6 +9,7 @@ import { DatabaseModule } from "./db/database.module";
 import { EventsModule } from "./events/events.module";
 import { GalleryModule } from "./gallery/gallery.module";
 import { HealthModule } from "./health/health.module";
+import { JudgingModule } from "./judging/judging.module";
 import { SubmissionsModule } from "./submissions/submissions.module";
 import { TeamsModule } from "./teams/teams.module";
 import { UsersModule } from "./users/users.module";
@@ -24,6 +25,7 @@ import { UsersModule } from "./users/users.module";
     TeamsModule,
     SubmissionsModule,
     GalleryModule,
+    JudgingModule,
   ],
   providers: [
     // Order matters: AuthGuard resolves request.user first, RolesGuard
