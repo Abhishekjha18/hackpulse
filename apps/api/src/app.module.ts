@@ -6,6 +6,7 @@ import { AuthGuard } from "./auth/auth.guard";
 import { AuthModule } from "./auth/auth.module";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { DatabaseModule } from "./db/database.module";
+import { EventsModule } from "./events/events.module";
 import { HealthModule } from "./health/health.module";
 import { UsersModule } from "./users/users.module";
 
@@ -16,6 +17,7 @@ import { UsersModule } from "./users/users.module";
     AuthModule,
     HealthModule,
     UsersModule,
+    EventsModule,
   ],
   providers: [
     // Order matters: AuthGuard resolves request.user first, RolesGuard
