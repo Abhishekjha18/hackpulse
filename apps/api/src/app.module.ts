@@ -8,6 +8,7 @@ import { RolesGuard } from "./common/guards/roles.guard";
 import { DatabaseModule } from "./db/database.module";
 import { EventsModule } from "./events/events.module";
 import { HealthModule } from "./health/health.module";
+import { TeamsModule } from "./teams/teams.module";
 import { UsersModule } from "./users/users.module";
 
 @Module({
@@ -18,6 +19,7 @@ import { UsersModule } from "./users/users.module";
     HealthModule,
     UsersModule,
     EventsModule,
+    TeamsModule,
   ],
   providers: [
     // Order matters: AuthGuard resolves request.user first, RolesGuard
