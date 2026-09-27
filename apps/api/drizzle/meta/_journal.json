@@ -15,6 +15,13 @@
       "when": 1790457597388,
       "tag": "0001_restrict_audit_log_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790470875121,
+      "tag": "0002_mushy_the_renegades",
+      "breakpoints": true
     }
   ]
 }
