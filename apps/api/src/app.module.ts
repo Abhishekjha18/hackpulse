@@ -4,15 +4,18 @@ import { APP_GUARD } from "@nestjs/core";
 
 import { AuthGuard } from "./auth/auth.guard";
 import { AuthModule } from "./auth/auth.module";
+import { CertificatesModule } from "./certificates/certificates.module";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { DatabaseModule } from "./db/database.module";
 import { EventsModule } from "./events/events.module";
 import { GalleryModule } from "./gallery/gallery.module";
 import { HealthModule } from "./health/health.module";
 import { JudgingModule } from "./judging/judging.module";
+import { QueueModule } from "./queue/queue.module";
 import { SubmissionsModule } from "./submissions/submissions.module";
 import { TeamsModule } from "./teams/teams.module";
 import { UsersModule } from "./users/users.module";
+import { WebhooksModule } from "./webhooks/webhooks.module";
 
 @Module({
   imports: [
@@ -26,6 +29,9 @@ import { UsersModule } from "./users/users.module";
     SubmissionsModule,
     GalleryModule,
     JudgingModule,
+    QueueModule,
+    WebhooksModule,
+    CertificatesModule,
   ],
   providers: [
     // Order matters: AuthGuard resolves request.user first, RolesGuard
