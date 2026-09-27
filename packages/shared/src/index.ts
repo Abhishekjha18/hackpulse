@@ -6,4 +6,5 @@ export * from "./schemas/profile";
 export * from "./schemas/submission";
 export * from "./schemas/team";
 export * from "./schemas/user";
+export * from "./schemas/voting";
 export * from "./schemas/webhook";
