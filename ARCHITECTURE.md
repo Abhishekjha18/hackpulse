@@ -184,7 +184,7 @@ Event CRUD + lifecycle, tracks/prizes/custom questions, team formation + invites
 Judge invitation + assignment (manual + algorithmic), rubric authoring, scoring flow, the z-score normalization engine, organizer live-progress dashboard, CSV export at every stage. Exit criterion: the role-isolation matrix passes for every actor/resource pair, verified by an integration test suite that calls the API directly (not through the UI).
 
 **Phase 3: Public (T3)** (done)
-Community voting (single + quadratic), randomized ballot ordering, comments + moderation, results-visibility gating, rate limiting, the hash-chained audit log, all built and live-verified. Duplicate-submission detection is still open (tracked next).
+Community voting (single + quadratic), randomized ballot ordering, comments + moderation, results-visibility gating, rate limiting, the hash-chained audit log, duplicate-submission detection (a normalized name+description+repoUrl content hash, computed on create/update, surfaced to organizers via `GET .../submissions/duplicates`), all built and live-verified.
 
 **Phase 4: Stretch (T4) + Bonus** (done)
 Full webhook system (HMAC-signed, queued, retried), certificate + signed judge-record generation with public verification, embeddable gallery widget, bulk import/export (round-trip verified live: export a real event, import it back, identical track/team/submission/score counts under a new event id), pairwise Bradley-Terry mode with bootstrap confidence intervals (regularization fix included), the documented normalization proof (real worked example in `JUDGING.md`), the written threat model (`THREAT-MODEL.md`).
