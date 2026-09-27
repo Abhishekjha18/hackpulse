@@ -20,6 +20,7 @@ import {
   submissions,
 } from "../db/schema";
 import { DB } from "../db/tokens";
+import { WebhooksService } from "../webhooks/webhooks.service";
 import { assertJudgingWindowOpen } from "./judging-window.util";
 import { NormalizationService } from "./normalization.service";
 
@@ -28,6 +29,7 @@ export class ScoringService {
   constructor(
     @Inject(DB) private readonly db: Database,
     private readonly normalization: NormalizationService,
+    private readonly webhooks: WebhooksService,
     private readonly audit: AuditService,
   ) {}
 
@@ -278,6 +280,7 @@ export class ScoringService {
     });
 
     await this.normalization.recompute(score.rubricId);
+    await this.maybeFireJudgingCompleted(assignmentId);
 
     await this.audit.log({
       eventId: assignment.eventId,
@@ -289,6 +292,32 @@ export class ScoringService {
     });
 
     return updated;
+  }
+
+  // FR-API-03: fires once when all assignments for a submission reach completed status.
+  private async maybeFireJudgingCompleted(assignmentId: string) {
+    const [assignment] = await this.db
+      .select()
+      .from(judgeAssignments)
+      .where(eq(judgeAssignments.id, assignmentId));
+    if (!assignment) {
+      return;
+    }
+
+    const siblings = await this.db
+      .select()
+      .from(judgeAssignments)
+      .where(eq(judgeAssignments.submissionId, assignment.submissionId));
+
+    const allCompleted = siblings.every((a) => a.status === "completed");
+    if (!allCompleted) {
+      return;
+    }
+
+    await this.webhooks.trigger(assignment.eventId, "judging.completed", {
+      submissionId: assignment.submissionId,
+      judgeCount: siblings.length,
+    });
   }
 
   async findOne(assignmentId: string) {
