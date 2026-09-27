@@ -3,6 +3,9 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 
+import { Nav } from "../components/nav";
+import { AuthProvider } from "../lib/auth-context";
+
 const sans = IBM_Plex_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -26,7 +29,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body>
-        <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <AuthProvider>
+          <Nav />
+          <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        </AuthProvider>
       </body>
     </html>
   );
