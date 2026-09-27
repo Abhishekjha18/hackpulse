@@ -5,6 +5,7 @@ import { APP_GUARD } from "@nestjs/core";
 import { AuditModule } from "./audit/audit.module";
 import { AuthGuard } from "./auth/auth.guard";
 import { AuthModule } from "./auth/auth.module";
+import { BulkModule } from "./bulk/bulk.module";
 import { CertificatesModule } from "./certificates/certificates.module";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { CommentsModule } from "./comments/comments.module";
@@ -40,6 +41,7 @@ import { WebhooksModule } from "./webhooks/webhooks.module";
     VotingModule,
     CommentsModule,
     ResultsModule,
+    BulkModule,
   ],
   providers: [
     // Order matters: AuthGuard resolves request.user first, RolesGuard
