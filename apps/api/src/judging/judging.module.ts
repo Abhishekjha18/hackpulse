@@ -9,6 +9,8 @@ import { TrackScopeGuard } from "./guards/track-scope.guard";
 import { JudgesController } from "./judges.controller";
 import { JudgesService } from "./judges.service";
 import { NormalizationService } from "./normalization.service";
+import { PairwiseController } from "./pairwise/pairwise.controller";
+import { PairwiseService } from "./pairwise/pairwise.service";
 import { RubricsController } from "./rubrics.controller";
 import { RubricsService } from "./rubrics.service";
 import { ScoringController } from "./scoring.controller";
@@ -16,7 +18,13 @@ import { ScoringService } from "./scoring.service";
 
 @Module({
   imports: [EventRoleInvitesModule, JudgeTrackScopeModule],
-  controllers: [JudgesController, RubricsController, AssignmentsController, ScoringController],
+  controllers: [
+    JudgesController,
+    RubricsController,
+    AssignmentsController,
+    ScoringController,
+    PairwiseController,
+  ],
   providers: [
     JudgesService,
     RubricsService,
@@ -25,7 +33,8 @@ import { ScoringService } from "./scoring.service";
     NormalizationService,
     AssignmentOwnershipGuard,
     TrackScopeGuard,
+    PairwiseService,
   ],
-  exports: [NormalizationService],
+  exports: [NormalizationService, PairwiseService],
 })
 export class JudgingModule {}
