@@ -1267,6 +1267,18 @@ interface OutlierJudge {
   correlationWithPeers: number | null;
 }
 
+interface AuditEntry {
+  id: string;
+  actorUserId: string | null;
+  actorName: string;
+  action: string;
+  actionLabel: string;
+  resourceType: string;
+  resourceId: string;
+  resourceLabel: string;
+  createdAt: string;
+}
+
 function ResultsTab({
   eventId,
   judges,
@@ -1290,6 +1302,25 @@ function ResultsTab({
     { submissionId: string; totalVotes: number; voterCount: number }[]
   >([]);
   const [submissions, setSubmissions] = useState<{ id: string; name: string }[]>([]);
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
+  const [auditVerify, setAuditVerify] = useState<{
+    valid: boolean;
+    brokenAt?: string;
+    reason?: string;
+  } | null>(null);
+
+  const loadAuditLog = () => {
+    api
+      .get<{ items: AuditEntry[] }>(`/events/${eventId}/audit-log`)
+      .then((r) => setAuditEntries(r.items))
+      .catch(() => {});
+    api
+      .get<{ valid: boolean; brokenAt?: string; reason?: string }>(
+        `/events/${eventId}/audit-log/verify`,
+      )
+      .then(setAuditVerify)
+      .catch(() => {});
+  };
 
   useEffect(() => {
     api
@@ -1304,6 +1335,8 @@ function ResultsTab({
       .get<{ items: { id: string; name: string }[] }>(`/events/${eventId}/gallery?limit=200`)
       .then((r) => setSubmissions(r.items))
       .catch(() => {});
+    loadAuditLog();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
 
   // Visible to organizers only, before or after publish (FR-RESULT-02).
@@ -1371,6 +1404,7 @@ function ResultsTab({
       });
       setMessage(`${certRecipients.length} certificate(s) generated.`);
       setCertRecipients([]);
+      loadAuditLog();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to generate certificates");
     } finally {
@@ -1528,6 +1562,44 @@ function ResultsTab({
             </li>
           ))}
         </ul>
+      )}
+
+      <h2 className="mt-8 text-h2 font-semibold text-ink">Audit log</h2>
+      {auditVerify && (
+        <p
+          data-testid="audit-verify-status"
+          className={`mt-1 text-xs ${auditVerify.valid ? "text-success" : "text-danger"}`}
+        >
+          {auditVerify.valid
+            ? "Chain verified. No tampering detected."
+            : `Chain broken at entry ${auditVerify.brokenAt} (${auditVerify.reason}).`}
+        </p>
+      )}
+      {auditEntries.length === 0 ? (
+        <p className="mt-2 text-sm leading-relaxed text-muted">No audit entries yet.</p>
+      ) : (
+        <table className="mt-3 w-full text-sm">
+          <thead>
+            <tr className="text-left text-muted">
+              <th className="pb-1">When</th>
+              <th className="pb-1">Action</th>
+              <th className="pb-1">Resource</th>
+              <th className="pb-1">Actor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {auditEntries.map((a) => (
+              <tr key={a.id} className="border-t border-line">
+                <td className="py-1 text-xs text-muted">
+                  {new Date(a.createdAt).toLocaleString()}
+                </td>
+                <td className="py-1">{a.actionLabel}</td>
+                <td className="py-1 text-xs text-muted">{a.resourceLabel}</td>
+                <td className="py-1 text-xs text-muted">{a.actorName}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
