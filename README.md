@@ -94,3 +94,36 @@ A pre-commit hook runs Prettier on staged files; CI runs the full set (format, t
 ## License
 
 MIT; see [LICENSE](LICENSE).
+
+## Seeded reference data
+
+On first boot, `apps/api/src/db/load-fixtures.ts` loads [fixtures.json](fixtures.json) into the database. It loads once and skips on later boots. `docker compose down -v` wipes the volume, so the next `docker compose up` reseeds from scratch.
+
+**What's loaded**: one event, "Sample Hack 2026", in the `judging` phase (submissions closed, gallery open, voting disabled, results unpublished). It has 8 tracks, one rubric (Functionality, Quality, Innovation, scored 1 to 5), 40 teams with one submission each, 30 judges, and around 125 submitted scores, already normalized so the organizer results endpoints work straight away.
+
+**Accounts**: every seeded account uses the password `dogfood-check-1`.
+
+| Email                                              | Role on the event                       | Notes                                                                      |
+| -------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------------------- |
+| `dogfood-organizer@hackpulse.local`                | Organizer (event owner)                 | Can create events; not an admin                                            |
+| `dogfood-judge-a@hackpulse.local`                  | Judge, scoped to the Security track     | Assigned "Glass Signal", the assignment `run.py` reads                     |
+| `dogfood-judge-b@hackpulse.local`                  | Judge, scoped to the Security track     | Assigned "North Drift", so it's refused judge A's scores                   |
+| `dogfood-participant@hackpulse.local`              | Participant                             | Owns "Dogfood Probe Team", which has no submission                         |
+| `firstname.lastname@example.org` (30 accounts)     | Judge, scoped to the tracks they scored | One per fixture judge, e.g. `tomas.varga@example.org`                      |
+| `name1@example.org`, `name2@example.org`, ... (40) | Participant, team owner                 | One per team, e.g. `priya1@example.org`; other team members aren't created |
+
+No seeded account is an admin. The first account you register yourself becomes the admin, since anything ending in `@hackpulse.local` or `@example.org` doesn't count towards that.
+
+> These credentials are public. If you deploy beyond localhost, delete or change the seeded accounts first.
+
+### Quirks in the seeded data
+
+The fixture data is deliberately awkward, so the judging system gets exercised on more than tidy numbers. The figures below are from a live run against this data.
+
+- **A duplicate project is skipped.** `prj_07` and `prj_41` are the same team in the same track, and the schema allows one submission per team per track. The second is skipped at load, so there are 40 submissions, not 41. Its scores are skipped too.
+- **Judges with no spread.** One judge gives every project the same score, and two judges have only a single score each. Their spread is zero, so their normalized score is 0 rather than a divide-by-zero. Only the first is flagged by `outlier-judges` (as `nearZeroVariance`), because that check needs at least 2 scores. See [JUDGING.md § 3](JUDGING.md#3-cross-judge-normalization-per-judge-z-score) for why a zero-spread judge is averaged in as 0 and not excluded.
+- **Judges who disagree with their peers.** Five judges rank projects roughly opposite to the other judges (correlation below -0.3), which `outlier-judges` reports as `divergesFromPeers`. Each is judged on only 3 or 4 shared projects, so treat it as a prompt to look, not a verdict.
+- **Normalization changes the outcome.** Of the 40 ranked projects, 37 rank differently under z-score normalization than under a plain raw average, by as much as 24 places, and only 3 of the top 5 are the same. That difference is what the normalization is for.
+- **The event's audit log starts empty.** Seeding writes straight to the database, not through the API, so nothing is logged until someone acts on the event.
+
+To see the judging results yourself, sign in as the organizer, get the rubric id from `GET /api/v1/events/d06f00d0-0000-4000-8000-000000000000/judging/rubrics`, then call `.../judging/results/normalization-proof?rubricId=<id>` and `.../judging/results/outlier-judges?rubricId=<id>` on the same event.
