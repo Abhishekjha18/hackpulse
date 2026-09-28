@@ -213,7 +213,8 @@ function OverviewTab({
   return (
     <div className="max-w-lg">
       <p className="text-sm leading-relaxed text-muted">
-        Status: <span className="font-medium text-ink">{event.displayStatus.replace(/_/g, " ")}</span>
+        Status:{" "}
+        <span className="font-medium text-ink">{event.displayStatus.replace(/_/g, " ")}</span>
       </p>
       <form onSubmit={save} className="mt-4 space-y-4">
         <div>
@@ -291,9 +292,9 @@ function OverviewTab({
           Banner image URL
         </label>
         <p className="mt-0.5 text-[11px] text-muted">
-          Shown at the top of the event page and on its card in the events list and homepage.
-          Leave blank for an auto-generated default banner. Same posture as a submission&rsquo;s
-          thumbnail image: a URL you supply, not a file upload.
+          Shown at the top of the event page and on its card in the events list and homepage. Leave
+          blank for an auto-generated default banner. Same posture as a submission&rsquo;s thumbnail
+          image: a URL you supply, not a file upload.
         </p>
         <input
           type="url"
@@ -692,7 +693,11 @@ function JudgesTab({
   }
 
   async function removeJudge(eventRoleId: string, name: string) {
-    if (!window.confirm(`Remove ${name} as a judge? Any of their in-progress or submitted scores will be permanently deleted.`)) {
+    if (
+      !window.confirm(
+        `Remove ${name} as a judge? Any of their in-progress or submitted scores will be permanently deleted.`,
+      )
+    ) {
       return;
     }
     setBusy(true);
@@ -907,9 +912,7 @@ function JudgesTab({
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Submissions
-          </h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Submissions</h3>
           <ul
             data-testid="manual-submission-list"
             className="mt-2 max-h-64 space-y-1 overflow-y-auto rounded-md border border-line p-2 text-sm"
@@ -1061,9 +1064,7 @@ function ResultsTab({
   const [teamsForEvent, setTeamsForEvent] = useState<TeamForCert[]>([]);
   const [certType, setCertType] = useState<"participation" | "winner" | "judge">("participation");
   const [certRecipients, setCertRecipients] = useState<string[]>([]);
-  const [outlierJudges, setOutlierJudges] = useState<(OutlierJudge & { rubricName: string })[]>(
-    [],
-  );
+  const [outlierJudges, setOutlierJudges] = useState<(OutlierJudge & { rubricName: string })[]>([]);
 
   useEffect(() => {
     api
@@ -1206,9 +1207,9 @@ function ResultsTab({
       <h2 className="mt-8 text-h2 font-semibold text-ink">Outlier judges</h2>
       <p className="mt-1 text-xs leading-relaxed text-muted">
         Normalization already corrects for a judge who scores consistently high or low or with no
-        variance. This is for cases that deserve a human look: a judge whose scores show
-        essentially no spread, or whose relative ranking of submissions runs opposite to their
-        peers&rsquo;. Flagging isn&rsquo;t a penalty; their scores are still counted.
+        variance. This is for cases that deserve a human look: a judge whose scores show essentially
+        no spread, or whose relative ranking of submissions runs opposite to their peers&rsquo;.
+        Flagging isn&rsquo;t a penalty; their scores are still counted.
       </p>
       {outlierJudges.length === 0 ? (
         <p className="mt-2 text-sm leading-relaxed text-muted">No outliers flagged.</p>
