@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 
 import { Inject, Injectable } from "@nestjs/common";
-import { and, asc, desc, eq, isNull, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 
 import type { Database } from "../db/client";
-import { auditLogEntries } from "../db/schema";
+import { auditLogEntries, submissions, tracks, user } from "../db/schema";
 import { DB } from "../db/tokens";
+import { type AuditLogRow, describeAuditEntry, type NameLookups } from "./audit-format";
 
 const GENESIS_HASH = "0".repeat(64);
 
@@ -142,10 +143,75 @@ export class AuditService {
 
     const hasMore = rows.length > limit;
     const items = rows.slice(0, limit);
+    const described = await this.describeEntries(items);
     return {
-      items,
+      items: described,
       nextCursor: hasMore ? items.at(-1)!.createdAt.toISOString() : null,
     };
+  }
+
+  // Read-side only: batches the id lookups every entry in a page might need
+  // (actor, an event_role revoke's target, a score's submission, a denied
+  // track) into three queries total, regardless of page size, then runs
+  // every row through the pure formatter (audit-format.ts).
+  private async describeEntries(rows: AuditLogRow[]) {
+    const userIds = new Set<string>();
+    const submissionIds = new Set<string>();
+    const trackIds = new Set<string>();
+
+    for (const row of rows) {
+      if (row.actorUserId) {
+        userIds.add(row.actorUserId);
+      }
+      if (row.resourceType === "user") {
+        userIds.add(row.resourceId);
+      }
+      if (row.resourceType === "submission") {
+        submissionIds.add(row.resourceId);
+      }
+      if (row.resourceType === "track") {
+        trackIds.add(row.resourceId);
+      }
+      const metadata =
+        row.metadata !== null && typeof row.metadata === "object"
+          ? (row.metadata as Record<string, unknown>)
+          : {};
+      if (typeof metadata.targetUserId === "string") {
+        userIds.add(metadata.targetUserId);
+      }
+      if (typeof metadata.submissionId === "string") {
+        submissionIds.add(metadata.submissionId);
+      }
+    }
+
+    const [userRows, submissionRows, trackRows] = await Promise.all([
+      userIds.size > 0
+        ? this.db
+            .select({ id: user.id, name: user.name })
+            .from(user)
+            .where(inArray(user.id, [...userIds]))
+        : Promise.resolve([] as { id: string; name: string }[]),
+      submissionIds.size > 0
+        ? this.db
+            .select({ id: submissions.id, name: submissions.name })
+            .from(submissions)
+            .where(inArray(submissions.id, [...submissionIds]))
+        : Promise.resolve([] as { id: string; name: string }[]),
+      trackIds.size > 0
+        ? this.db
+            .select({ id: tracks.id, name: tracks.name })
+            .from(tracks)
+            .where(inArray(tracks.id, [...trackIds]))
+        : Promise.resolve([] as { id: string; name: string }[]),
+    ]);
+
+    const lookups: NameLookups = {
+      userNames: new Map(userRows.map((r) => [r.id, r.name])),
+      submissionNames: new Map(submissionRows.map((r) => [r.id, r.name])),
+      trackNames: new Map(trackRows.map((r) => [r.id, r.name])),
+    };
+
+    return rows.map((row) => describeAuditEntry(row, lookups));
   }
 
   /** Recomputes every entry hash in creation order and confirms it matches
