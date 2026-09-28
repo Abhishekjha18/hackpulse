@@ -215,6 +215,14 @@ export function Nav() {
               >
                 Certificates
               </Link>
+              {user.isAdmin && (
+                <Link
+                  href="/admin/audit-log"
+                  className="rounded-md px-2.5 py-1.5 text-sm font-medium text-muted hover:bg-surface-alt hover:text-ink"
+                >
+                  Audit log
+                </Link>
+              )}
               <Link
                 href={`/users/${user.id}`}
                 data-testid="nav-profile-link"
