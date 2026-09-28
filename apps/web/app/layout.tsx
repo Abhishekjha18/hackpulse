@@ -4,6 +4,8 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import Script from "next/script";
 
+import { DecorativeBackground } from "../components/decorative-background";
+import { GraphPaperOverlay } from "../components/graph-paper-overlay";
 import { Nav } from "../components/nav";
 import { AuthProvider } from "../lib/auth-context";
 import { ThemeProvider } from "../lib/theme-context";
@@ -63,6 +65,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script id="theme-init" strategy="beforeInteractive">
           {THEME_INIT_SCRIPT}
         </Script>
+        <GraphPaperOverlay />
+        <DecorativeBackground />
         <ThemeProvider>
           <AuthProvider>
             <Nav />
