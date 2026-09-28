@@ -2,7 +2,7 @@
 
 import type { Event } from "@hackpulse/shared";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { CountdownChip, EventBannerOrDefault, StatusBadge } from "../components/ui";
 import { api } from "../lib/api";
@@ -50,6 +50,10 @@ function revealClass(revealed: boolean): string {
     : "transition-all duration-700 ease-out motion-safe:opacity-0 motion-safe:translate-y-6";
 }
 
+// Small and varied per shape so it reads as depth rather than a single
+// block moving; capped in the scroll handler so it never drifts far.
+const HERO_PARALLAX_RATES = [0.16, 0.22, 0.12, 0.18];
+
 // The actual events browser lives at /events (linked from the nav and
 // both CTAs below). Kept separate on purpose: a first-time visitor and a
 // returning participant want different things from "/".
@@ -69,13 +73,82 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
+  const heroParallaxRefs = useRef<Array<HTMLSpanElement | null>>([null, null, null, null]);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+    let raf = 0;
+    function onScroll() {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const y = window.scrollY;
+        heroParallaxRefs.current.forEach((el, i) => {
+          if (!el) {
+            return;
+          }
+          const offset = Math.min(y * HERO_PARALLAX_RATES[i], 60);
+          el.style.transform = `translateY(${offset}px)`;
+        });
+      });
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   const stats_ = useInView<HTMLElement>();
   const features = useInView<HTMLElement>();
   const happening = useInView<HTMLElement>();
 
   return (
     <div>
+      {/* Decorative accents hidden below sm: at hero-text width they'd sit
+          on top of the copy instead of around it. Each shape is two nested
+          spans so the scroll-linked parallax translateY and the idle
+          drift/spin animation don't both fight over `transform` on the
+          same element. Heading/subtext/CTAs fade in once on mount, not
+          scroll-triggered, since the hero should be visible immediately. */}
       <section className="relative overflow-hidden py-10 text-center sm:py-16">
+        <span
+          ref={(el) => {
+            heroParallaxRefs.current[0] = el;
+          }}
+          aria-hidden="true"
+          className="pointer-events-none absolute left-[8%] top-6 hidden sm:block"
+        >
+          <span className="block h-10 w-10 rounded-full border-2 border-accent/35 motion-safe:animate-[decorative-drift_4s_ease-in-out_0s_infinite]" />
+        </span>
+        <span
+          ref={(el) => {
+            heroParallaxRefs.current[1] = el;
+          }}
+          aria-hidden="true"
+          className="pointer-events-none absolute right-[12%] top-14 hidden sm:block"
+        >
+          <span className="block h-4 w-4 rounded-full bg-pulse/45 motion-safe:animate-[decorative-drift-sm_2s_ease-in-out_0.4s_infinite]" />
+        </span>
+        <span
+          ref={(el) => {
+            heroParallaxRefs.current[2] = el;
+          }}
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-8 left-[15%] hidden sm:block"
+        >
+          <span className="block h-6 w-6 rounded-md border-2 border-ink/20 motion-safe:animate-[decorative-spin-cw_14s_linear_infinite]" />
+        </span>
+        <span
+          ref={(el) => {
+            heroParallaxRefs.current[3] = el;
+          }}
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-4 right-[10%] hidden sm:block"
+        >
+          <span className="block h-14 w-14 rounded-full border-2 border-accent/35 motion-safe:animate-[decorative-drift_6s_ease-in-out_0.7s_infinite]" />
+        </span>
         <h1 className="relative mx-auto max-w-2xl text-display font-semibold text-ink motion-safe:animate-[hero-in_600ms_ease-out_both]">
           Run a hackathon end to end, with judging you can trust.
         </h1>
