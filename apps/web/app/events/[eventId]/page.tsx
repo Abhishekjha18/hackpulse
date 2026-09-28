@@ -151,6 +151,14 @@ export default function EventPage() {
               Organizer dashboard
             </Link>
           )}
+          {user?.isAdmin && !isOrganizer && (
+            <Link
+              href={`/admin/audit-log?eventId=${eventId}`}
+              className="rounded-md border border-line bg-paper px-3 py-1.5 text-sm font-medium hover:bg-surface-alt"
+            >
+              Audit log (admin)
+            </Link>
+          )}
         </div>
       </div>
 
