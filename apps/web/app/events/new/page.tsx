@@ -32,7 +32,7 @@ export default function NewEventPage() {
   const [lifecycleMode, setLifecycleMode] = useState<"automatic" | "manual">("automatic");
   const [registrationOpenAt, setRegistrationOpenAt] = useState(localInputValueInDays(1));
   const [registrationCloseAt, setRegistrationCloseAt] = useState(localInputValueInDays(7));
-  const [submissionOpenAt, setSubmissionOpenAt] = useState(localInputValueInDays(1));
+  const [submissionOpenAt, setSubmissionOpenAt] = useState(localInputValueInDays(7));
   const [submissionCloseAt, setSubmissionCloseAt] = useState(localInputValueInDays(14));
   const [judgingOpenAt, setJudgingOpenAt] = useState(localInputValueInDays(14));
   const [judgingCloseAt, setJudgingCloseAt] = useState(localInputValueInDays(21));
