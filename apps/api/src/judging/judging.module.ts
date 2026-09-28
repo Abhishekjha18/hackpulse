@@ -11,6 +11,7 @@ import { JudgesService } from "./judges.service";
 import { NormalizationService } from "./normalization.service";
 import { PairwiseController } from "./pairwise/pairwise.controller";
 import { PairwiseService } from "./pairwise/pairwise.service";
+import { ResultsController } from "./results.controller";
 import { RubricsController } from "./rubrics.controller";
 import { RubricsService } from "./rubrics.service";
 import { ScoringController } from "./scoring.controller";
@@ -24,6 +25,7 @@ import { ScoringService } from "./scoring.service";
     AssignmentsController,
     ScoringController,
     PairwiseController,
+    ResultsController,
   ],
   providers: [
     JudgesService,
