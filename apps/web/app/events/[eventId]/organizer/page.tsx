@@ -289,6 +289,34 @@ function OverviewTab({
           onError={onError}
         />
       </div>
+
+      <div className="mt-4 max-w-2xl">
+        <label className="block text-xs font-medium tracking-wide text-muted">
+          Banner image URL
+        </label>
+        <p className="mt-0.5 text-[11px] text-muted">
+          Shown at the top of the event page and on its card in the events list and homepage.
+          Leave blank for an auto-generated default banner. Same posture as a submission&rsquo;s
+          thumbnail image: a URL you supply, not a file upload.
+        </p>
+        <input
+          type="url"
+          placeholder="https://…"
+          data-testid="event-banner-url"
+          defaultValue={event.bannerImageUrl ?? ""}
+          onBlur={async (e) => {
+            try {
+              const updated = await api.patch<Event>(`/events/${event.id}`, {
+                bannerImageUrl: e.target.value || null,
+              });
+              onSaved(updated);
+            } catch (err) {
+              onError(err instanceof ApiError ? err.message : "Failed to save banner image");
+            }
+          }}
+          className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
+        />
+      </div>
     </div>
   );
 }
