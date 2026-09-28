@@ -25,7 +25,7 @@ That one command brings up Postgres, Redis, the API, and the web app. The instan
 - No email delivery of any kind. Judge invites grant a role to an existing account directly, there's no password reset email flow either. This is a deliberate consequence of running with no external services, not an oversight.
 - Background jobs (webhook delivery, certificate rendering) run in the same process as the API rather than a separate worker, so they don't get their own failure isolation under heavy load. See [ARCHITECTURE.md § 2 Containers](ARCHITECTURE.md#2-containers) for the detail.
 - No automated judge collusion detection, only the normalization method's built in resistance to a single degenerate judge.
-- The web UI is functional but plain, and covers the golden path rather than every corner of the API: register/sign in, browse and create events, form or join a team, submit a project, and judge by rubric all work end to end through real pages, not just the API. Pairwise-mode judging, voting, a dedicated results page, prizes and custom questions, certificate download, webhook management, and bulk import/export all exist and are tested through the API, just not through a UI page yet.
+- The web UI is functional but plain, and covers the everyday path rather than every corner of the API (certificate download, webhook management, and bulk import and export all exist and are tested through the API, just not through a UI page yet).
 
 ## Documentation
 

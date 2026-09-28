@@ -1,0 +1,2 @@
+ALTER TABLE "prizes" ADD COLUMN "winner_count" integer DEFAULT 1 NOT NULL;--> statement-breakpoint
+ALTER TABLE "prizes" ADD CONSTRAINT "prizes_winner_count_positive" CHECK ("prizes"."winner_count" >= 1);

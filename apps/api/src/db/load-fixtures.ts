@@ -429,12 +429,12 @@ async function main() {
     "Dogfood Participant",
   );
 
-  const anchorTrackId = trackIdMap.get("trk_01"); // Developer tools — prj_01's and prj_04's track
+  const anchorTrackId = trackIdMap.get("trk_04"); // Security — prj_01's and prj_08's track
   const anchorSubmissionId = submissionIdMap.get("prj_01"); // "Glass Signal"
-  const otherSubmissionId = submissionIdMap.get("prj_04"); // "Quiet Signal", same track
+  const otherSubmissionId = submissionIdMap.get("prj_08"); // "North Drift", same track
   if (!anchorTrackId || !anchorSubmissionId || !otherSubmissionId) {
     throw new Error(
-      "Expected fixture track/project ids (trk_01, prj_01, prj_04) were not found while " +
+      "Expected fixture track/project ids (trk_04, prj_01, prj_08) were not found while " +
         "wiring up the dogfood-judge-a/-b checker accounts.",
     );
   }
