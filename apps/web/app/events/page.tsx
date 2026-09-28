@@ -5,6 +5,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
+import {
+  CountdownChip,
+  EventBannerOrDefault,
+  LoadingState,
+  PrizeChip,
+  StatusBadge,
+} from "../../components/ui";
 import { api, ApiError } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 
@@ -14,12 +21,14 @@ interface EventListItem extends Event {
   createdAt: string;
 }
 
+const NEW_WINDOW_MS = 48 * 60 * 60 * 1000;
+
 // useSearchParams() opts the whole subtree into client-side rendering and
 // needs a Suspense boundary around it per Next's own requirement — kept
 // as a thin wrapper so the rest of the page doesn't have to think about it.
 export default function EventsPage() {
   return (
-    <Suspense fallback={<p className="mt-6 text-sm text-muted">Loading…</p>}>
+    <Suspense fallback={<LoadingState />}>
       <EventsPageInner />
     </Suspense>
   );
@@ -149,7 +158,7 @@ function EventsPageInner() {
 
       {error && <p className="mt-6 text-sm text-danger">{error}</p>}
 
-      {events === null && !error && <p className="mt-6 text-sm text-muted">Loading…</p>}
+      {events === null && !error && <LoadingState className="mt-6" />}
 
       {events?.length === 0 && (
         <p className="mt-6 text-sm leading-relaxed text-muted">
@@ -164,35 +173,57 @@ function EventsPageInner() {
       )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        {events?.map((event) => (
-          <Link
-            key={event.id}
-            href={`/events/${event.id}`}
-            className="group relative overflow-hidden rounded-xl border border-line bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
-          >
-            <span className="inline-flex items-center rounded-full border border-line px-2 py-0.5 text-xs font-medium capitalize text-muted">
-              {event.displayStatus.replace(/_/g, " ")}
-            </span>
-            <h2 className="mt-3 text-h2 font-semibold text-ink">{event.name}</h2>
-            <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted">
-              {event.description}
-            </p>
-            {(event.submissionCount > 0 || event.prizeNames.length > 0) && (
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
-                {event.submissionCount > 0 && (
-                  <span>
-                    {event.submissionCount} submission{event.submissionCount === 1 ? "" : "s"}
-                  </span>
+        {events?.map((event) => {
+          const isNew = Date.now() - new Date(event.createdAt).getTime() < NEW_WINDOW_MS;
+          return (
+            <Link
+              key={event.id}
+              href={`/events/${event.id}`}
+              className="group relative overflow-hidden rounded-xl border border-line bg-surface shadow-sm transition hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
+            >
+              <EventBannerOrDefault
+                bannerImageUrl={event.bannerImageUrl}
+                name={event.name}
+                className="h-28 border-b border-line"
+              />
+              <div className="p-4">
+                <span className="absolute inset-y-0 left-0 w-1 bg-pulse opacity-0 transition group-hover:opacity-100" />
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge status={event.displayStatus} />
+                    {isNew && (
+                      <span
+                        data-testid="event-new-badge"
+                        className="inline-flex items-center rounded-full bg-accent-soft px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-accent-dark"
+                      >
+                        New
+                      </span>
+                    )}
+                  </div>
+                  {event.displayStatus === "submissions_open" && event.submissionCloseAt && (
+                    <CountdownChip deadline={event.submissionCloseAt} />
+                  )}
+                </div>
+                <h2 className="mt-3 text-h2 font-semibold text-ink">{event.name}</h2>
+                <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted">
+                  {event.description}
+                </p>
+                {(event.submissionCount > 0 || event.prizeNames.length > 0) && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {event.submissionCount > 0 && (
+                      <span className="text-xs text-muted">
+                        {event.submissionCount} submission{event.submissionCount === 1 ? "" : "s"}
+                      </span>
+                    )}
+                    {event.prizeNames.map((name) => (
+                      <PrizeChip key={name} name={name} />
+                    ))}
+                  </div>
                 )}
-                {event.prizeNames.map((name) => (
-                  <span key={name} className="rounded-full bg-accent-soft px-2 py-0.5 text-accent-dark">
-                    {name}
-                  </span>
-                ))}
               </div>
-            )}
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
