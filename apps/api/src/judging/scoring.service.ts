@@ -23,6 +23,7 @@ import { DB } from "../db/tokens";
 import { WebhooksService } from "../webhooks/webhooks.service";
 import { assertJudgingWindowOpen } from "./judging-window.util";
 import { NormalizationService } from "./normalization.service";
+import { findDuplicateCriterionId, weightedRawScore } from "./raw-score.util";
 
 @Injectable()
 export class ScoringService {
@@ -70,6 +71,16 @@ export class ScoringService {
       .where(eq(rubricCriteria.rubricId, rubricId));
     const validIds = new Set(criteria.map((c) => c.id));
 
+    const duplicate = findDuplicateCriterionId(input.criterionScores);
+    if (duplicate) {
+      throw new BadRequestException({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: `Criterion ${duplicate} appears more than once`,
+        },
+      });
+    }
+
     for (const cs of input.criterionScores) {
       if (!validIds.has(cs.rubricCriterionId)) {
         throw new BadRequestException({
@@ -86,17 +97,6 @@ export class ScoringService {
       }
     }
     return criteria;
-  }
-
-  private computeRawWeighted(
-    criteria: { id: string; weight: string }[],
-    values: { rubricCriterionId: string; value: number }[],
-  ) {
-    const weightByCriterion = new Map(criteria.map((c) => [c.id, Number(c.weight)]));
-    return values.reduce(
-      (sum, v) => sum + v.value * (weightByCriterion.get(v.rubricCriterionId) ?? 0),
-      0,
-    );
   }
 
   // FR-SCORE-02/04 (draft) and FR-SCORE-05 (post-submit edit -> revision).
@@ -164,7 +164,13 @@ export class ScoringService {
           });
       }
 
-      const rawWeighted = this.computeRawWeighted(criteria, input.criterionScores);
+      // Derived from what is now stored, not from the request body: an
+      // edit may name only the criteria that changed.
+      const storedValues = await tx
+        .select()
+        .from(criterionScores)
+        .where(eq(criterionScores.scoreId, score.id));
+      const rawWeighted = weightedRawScore(criteria, storedValues);
       const [updated] = await tx
         .update(scores)
         .set({
@@ -254,10 +260,7 @@ export class ScoringService {
       });
     }
 
-    const rawWeighted = this.computeRawWeighted(
-      criteria,
-      values.map((v) => ({ rubricCriterionId: v.rubricCriterionId, value: Number(v.value) })),
-    );
+    const rawWeighted = weightedRawScore(criteria, values);
 
     const [updated] = await this.db.transaction(async (tx) => {
       const rows = await tx
