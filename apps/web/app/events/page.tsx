@@ -111,7 +111,7 @@ function EventsPageInner() {
                         `Imported "${result.event.name}" with some warnings:\n\n${result.warnings.join("\n")}`,
                       );
                     }
-                    router.push(`/events/${result.event.id}`);
+                    router.push(`/events/${result.event.id}/organizer`);
                   } catch (err) {
                     setImportError(
                       err instanceof ApiError ? err.message : "Failed to import archive",
