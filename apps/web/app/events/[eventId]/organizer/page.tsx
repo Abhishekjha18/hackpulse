@@ -1,6 +1,14 @@
 "use client";
 
-import type { Event, Prize, Rubric, RubricCriterion, Track } from "@hackpulse/shared";
+import type {
+  Event,
+  Prize,
+  Rubric,
+  RubricCriterion,
+  Team,
+  TeamMember,
+  Track,
+} from "@hackpulse/shared";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -127,7 +135,7 @@ export default function OrganizerPage() {
             onError={setError}
           />
         )}
-        {tab === "results" && <ResultsTab eventId={eventId} />}
+        {tab === "results" && <ResultsTab eventId={eventId} judges={judges} />}
       </div>
     </div>
   );
@@ -707,16 +715,25 @@ function JudgesTab({
   );
 }
 
-function ResultsTab({ eventId }: { eventId: string }) {
+type TeamForCert = Team & { members: TeamMember[] };
+
+function ResultsTab({ eventId, judges }: { eventId: string; judges: JudgeRow[] }) {
   const [unjudgedCount, setUnjudgedCount] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [teamsForEvent, setTeamsForEvent] = useState<TeamForCert[]>([]);
+  const [certType, setCertType] = useState<"participation" | "winner" | "judge">("participation");
+  const [certRecipients, setCertRecipients] = useState<string[]>([]);
 
   useEffect(() => {
     api
       .get<{ id: string }[]>(`/events/${eventId}/results/unjudged`)
       .then((rows) => setUnjudgedCount(rows.length))
+      .catch(() => {});
+    api
+      .get<TeamForCert[]>(`/events/${eventId}/teams`)
+      .then(setTeamsForEvent)
       .catch(() => {});
   }, [eventId]);
 
@@ -728,6 +745,30 @@ function ResultsTab({ eventId }: { eventId: string }) {
       setMessage("Results published.");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to publish results");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const recipients =
+    certType === "judge"
+      ? judges.map((j) => ({ userId: j.userId, label: j.userName }))
+      : teamsForEvent.flatMap((t) =>
+          t.members.map((m) => ({ userId: m.userId, label: `${m.userName} (${t.name})` })),
+        );
+
+  async function generateCertificates() {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.post(`/events/${eventId}/certificates/generate`, {
+        type: certType,
+        recipientIds: certRecipients,
+      });
+      setMessage(`${certRecipients.length} certificate(s) generated.`);
+      setCertRecipients([]);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to generate certificates");
     } finally {
       setBusy(false);
     }
@@ -749,6 +790,62 @@ function ResultsTab({ eventId }: { eventId: string }) {
         className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
       >
         Publish results
+      </button>
+
+      <h2 className="mt-8 text-h2 font-semibold text-ink">Certificates</h2>
+      <div className="mt-3">
+        <label className="block text-xs font-medium tracking-wide text-ink">Type</label>
+        <select
+          data-testid="certificate-type-select"
+          value={certType}
+          onChange={(e) => {
+            setCertType(e.target.value as typeof certType);
+            setCertRecipients([]);
+          }}
+          className="mt-1 rounded-md border border-line px-3 py-2 text-sm"
+        >
+          <option value="participation">Participation</option>
+          <option value="winner">Winner</option>
+          <option value="judge">Judge</option>
+        </select>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-1.5" data-testid="certificate-recipients">
+        {recipients.map((r) => {
+          const checked = certRecipients.includes(r.userId);
+          return (
+            <label
+              key={r.userId}
+              className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs font-medium ${
+                checked
+                  ? "border-accent bg-accent-soft text-accent-dark"
+                  : "border-line bg-paper text-muted"
+              }`}
+            >
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={checked}
+                onChange={() =>
+                  setCertRecipients((prev) =>
+                    checked ? prev.filter((id) => id !== r.userId) : [...prev, r.userId],
+                  )
+                }
+              />
+              {r.label}
+            </label>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        disabled={busy || certRecipients.length === 0}
+        data-testid="certificate-generate"
+        onClick={generateCertificates}
+        className="mt-4 rounded-md border border-line bg-paper px-4 py-2 text-sm font-medium hover:bg-surface-alt disabled:opacity-50"
+      >
+        Generate certificates
       </button>
     </div>
   );
