@@ -7,6 +7,7 @@ import Script from "next/script";
 import { DecorativeBackground } from "../components/decorative-background";
 import { GraphPaperOverlay } from "../components/graph-paper-overlay";
 import { Nav } from "../components/nav";
+import { PageTransition } from "../components/page-transition";
 import { AuthProvider } from "../lib/auth-context";
 import { ThemeProvider } from "../lib/theme-context";
 
@@ -70,7 +71,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <AuthProvider>
             <Nav />
-            <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+            <main className="mx-auto max-w-5xl px-4 py-8">
+              <PageTransition>{children}</PageTransition>
+            </main>
           </AuthProvider>
         </ThemeProvider>
       </body>

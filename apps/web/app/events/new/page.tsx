@@ -8,7 +8,9 @@ import { api, ApiError } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
 
 // datetime-local inputs both read and write local time with no timezone
-// info, so defaults/conversion have to go through local getters/setters.
+// info, so defaults/conversion have to go through local getters/setters
+// rather than the UTC-based isoInDays() this replaced — using UTC here
+// would silently shift every default by the viewer's UTC offset.
 function localInputValueInDays(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
@@ -34,15 +36,18 @@ export default function NewEventPage() {
   const [submissionCloseAt, setSubmissionCloseAt] = useState(localInputValueInDays(14));
   const [judgingOpenAt, setJudgingOpenAt] = useState(localInputValueInDays(14));
   const [judgingCloseAt, setJudgingCloseAt] = useState(localInputValueInDays(21));
+  const [coOrganizerEmails, setCoOrganizerEmails] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   if (!loading && !user) {
     return <p className="text-sm text-muted">Sign in first to create an event.</p>;
   }
-  // Requires the same canOrganizeEvents/isAdmin gate the backend enforces
-  // (EventsService.create) — checked here too so a user without it sees a
-  // clear message instead of a 403 after filling out the whole form.
+  // Found live: this had no role check at all — any registered user could
+  // create an event. Now requires the same canOrganizeEvents/isAdmin gate
+  // the backend enforces (EventsService.create) — checked here too so a
+  // user without it sees a clear message instead of a 403 after filling
+  // out the whole form.
   if (!loading && user && !user.isAdmin && !user.canOrganizeEvents) {
     return (
       <p className="text-sm leading-relaxed text-muted">
@@ -82,6 +87,25 @@ export default function NewEventPage() {
           : {}),
         galleryVisibility: "open",
       });
+      const coOrganizerList = coOrganizerEmails
+        .split(/[\n,]/)
+        .map((email) => email.trim())
+        .filter((email) => email.length > 0);
+      if (coOrganizerList.length > 0) {
+        const results = await Promise.allSettled(
+          coOrganizerList.map((email) => api.post(`/events/${event.id}/organizers`, { email })),
+        );
+        const failed = coOrganizerList.filter((_email, i) => results[i].status === "rejected");
+        if (failed.length > 0) {
+          // Non-blocking — the event itself was created successfully, so
+          // this only warns about the co-organizer invites specifically
+          // (e.g. an email with no registered account yet) rather than
+          // losing the whole event.
+          window.alert(
+            `Event created, but these co-organizer invites failed (they may not have an account yet): ${failed.join(", ")}`,
+          );
+        }
+      }
       // The new event grants the creator an "organizer" eventRole, but
       // AuthProvider's cached `user` is a snapshot from login/last refresh —
       // without this, isOrganizer checks on the event page would read the
@@ -100,7 +124,7 @@ export default function NewEventPage() {
       <h1 className="text-h1 font-semibold text-ink">Create an event</h1>
       <p className="mt-2 text-sm leading-relaxed text-muted">
         Dates default to a sensible schedule starting today, in your local timezone. Edit anything
-        below, or change it later.
+        below, or change it later from the organizer dashboard.
       </p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <div>
@@ -167,7 +191,8 @@ export default function NewEventPage() {
                 className="mt-0.5"
               />
               <span>
-                <span className="font-medium">Manual</span>: no dates, move status by hand later.
+                <span className="font-medium">Manual</span>: no dates, move status by hand from the
+                organizer dashboard as the event progresses.
               </span>
             </label>
           </div>
@@ -175,10 +200,18 @@ export default function NewEventPage() {
 
         {lifecycleMode === "automatic" && (
           <div className="grid gap-4 sm:grid-cols-2">
-            {/* Each field's `min` is the previous field's current value, so
-                the browser's own date picker won't offer an out-of-order
-                date. The backend re-checks the same chain regardless,
-                since this is only ever a client-side steer. */}
+            {/* Found live: every one of these could be typed in any order —
+                submissionOpenAt before registrationCloseAt, judgingOpenAt
+                before submissionCloseAt, etc. — and only surfaced as a
+                confusing error (or, for the one pair the backend didn't
+                check at all, not at all) on submit. Each field's `min` is
+                now the previous field's current value, so the browser's
+                own date picker won't offer an out-of-order date in the
+                first place; the backend re-checks the same chain
+                (registrationOpenAt < registrationCloseAt <= submissionOpenAt
+                < submissionCloseAt <= judgingOpenAt < judgingCloseAt)
+                regardless, since this is only ever a client-side steer,
+                not the real guarantee. */}
             <div>
               <label className="block text-xs font-medium tracking-wide text-ink">
                 Registration opens
@@ -265,6 +298,25 @@ export default function NewEventPage() {
             </div>
           </div>
         )}
+
+        <div>
+          <label className="block text-xs font-medium tracking-wide text-ink">
+            Co-organizers <span className="font-normal text-muted">(optional)</span>
+          </label>
+          <p className="mt-1 text-xs leading-relaxed text-muted">
+            They&rsquo;ll have the same full control over this event as you do, once they accept the
+            invite from their notifications. One email per line, or comma-separated. More can be
+            added later from the event&rsquo;s dashboard.
+          </p>
+          <textarea
+            data-testid="event-co-organizer-emails"
+            value={coOrganizerEmails}
+            onChange={(e) => setCoOrganizerEmails(e.target.value)}
+            placeholder="teammate@example.com"
+            rows={2}
+            className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
+          />
+        </div>
 
         {error && <p className="text-sm text-danger">{error}</p>}
         <button

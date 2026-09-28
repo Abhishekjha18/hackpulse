@@ -5,8 +5,28 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import {
+  CountdownChip,
+  EventBannerOrDefault,
+  LoadingState,
+  StatusBadge,
+  ThumbnailOrInitials,
+  VoteBadge,
+} from "../../../components/ui";
 import { api, ApiError } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
+import {
+  computePlacements,
+  computeWonPrizes,
+  type Placement,
+  type ResultsResponse,
+} from "../../../lib/results";
+
+interface VoteTallyRow {
+  submissionId: string;
+  totalVotes: number;
+  voterCount: number;
+}
 
 export default function EventPage() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -15,11 +35,14 @@ export default function EventPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [prizes, setPrizes] = useState<Prize[]>([]);
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [tally, setTally] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [trackFilter, setTrackFilter] = useState("");
   const [tagFilter, setTagFilter] = useState("");
   const [allTags, setAllTags] = useState<string[]>([]);
+  const [placements, setPlacements] = useState<Placement[]>([]);
+  const [wonPrizes, setWonPrizes] = useState<string[]>([]);
   const searchDebounceRef = useRef<number | null>(null);
 
   const loadGallery = (opts: { search: string; track: string; tag: string }) => {
@@ -51,7 +74,20 @@ export default function EventPage() {
   useEffect(() => {
     api
       .get<Event>(`/events/${eventId}`)
-      .then(setEvent)
+      .then((e) => {
+        setEvent(e);
+        // Vote tallies stay hidden from the public until results are
+        // published (FR-RESULT-02): only ask once we know that's true,
+        // rather than relying on the API's 403 to hide the UI reactively.
+        if (e.status === "results_published") {
+          api
+            .get<VoteTallyRow[]>(`/events/${eventId}/votes/tally`)
+            .then((rows) =>
+              setTally(Object.fromEntries(rows.map((r) => [r.submissionId, r.totalVotes]))),
+            )
+            .catch(() => {});
+        }
+      })
       .catch((e) => setError(e instanceof ApiError ? e.message : "Failed to load event"));
     loadGallery({ search: "", track: "", tag: "" });
     api
@@ -78,11 +114,48 @@ export default function EventPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, trackFilter, tagFilter]);
 
+  // Requested explicitly, on both counts: (1) every participant should see
+  // their placement once results publish, not just whoever came first --
+  // "won" used to be derived purely as rank 1 in a result set, so ranks 2+
+  // got nothing at all; (2) a prize win is a separate fact, driven by each
+  // prize's own winnerCount (top N within its track, or overall if
+  // trackId is null) matched against `prizes` (already loaded above), not
+  // hardcoded to "rank 1 wins." A separate effect keyed on
+  // [eventId, event, user, prizes]: the auth session resolves async, often
+  // after the event fetch, so folding this into that effect would silently
+  // skip it whenever user was still null on the first run.
+  useEffect(() => {
+    if (!user || !event || event.status !== "results_published") {
+      setPlacements([]);
+      setWonPrizes([]);
+      return;
+    }
+    let cancelled = false;
+    Promise.all([
+      api.get<Submission[]>(`/events/${eventId}/submissions/mine`).catch(() => []),
+      api.get<ResultsResponse>(`/events/${eventId}/results`).catch(() => null),
+    ]).then(([mine, results]) => {
+      if (cancelled || !results || mine.length === 0) {
+        return;
+      }
+      const mineIds = new Set(mine.map((s) => s.id));
+      const myPlacements = computePlacements(mineIds, results);
+      setPlacements(myPlacements);
+      setWonPrizes(computeWonPrizes(myPlacements, prizes).map((prize) => prize.name));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId, event, user, prizes]);
+
   // Found live: a self-judging organizer holds *two* eventRoles rows for
   // this event (organizer and judge), but `.find()` only ever returns the
   // first one, so one of their two dashboard links silently disappeared
   // depending on row order. Checked independently instead — both buttons
   // show whenever both roles apply.
+  // isAdmin doesn't satisfy either check: an admin only gets the organizer
+  // dashboard link for events they actually organize, same as anyone else.
+  // See apps/api/src/common/auth/is-event-organizer.ts.
   const myEventRoles = user?.eventRoles.filter((r) => r.eventId === eventId) ?? [];
   const isOrganizer = myEventRoles.some((r) => r.role === "organizer");
   const isJudge = myEventRoles.some((r) => r.role === "judge");
@@ -91,16 +164,49 @@ export default function EventPage() {
     return <p className="text-sm text-danger">{error}</p>;
   }
   if (!event) {
-    return <p className="text-sm text-muted">Loading…</p>;
+    return <LoadingState />;
   }
 
   return (
     <div>
+      <EventBannerOrDefault
+        bannerImageUrl={event.bannerImageUrl}
+        name={event.name}
+        className="mb-6 h-48 rounded-xl border border-line sm:h-64"
+      />
+      {wonPrizes.length > 0 && (
+        <div
+          data-testid="win-banner"
+          className="mb-6 rounded-lg border border-success/30 bg-success-soft px-4 py-3 text-sm leading-relaxed text-ink"
+        >
+          Congratulations! Your team won <strong>{wonPrizes.join(", ")}</strong>.
+        </div>
+      )}
+      {placements.length > 0 && (
+        <div
+          data-testid="placement-banner"
+          className="mb-6 rounded-lg border border-line bg-surface-alt px-4 py-3 text-sm leading-relaxed text-ink"
+        >
+          Your placement:{" "}
+          {placements.map((p, i) => (
+            <span key={p.label}>
+              {i > 0 && ", "}
+              <strong>
+                #{p.rank} of {p.total}
+              </strong>{" "}
+              in {p.label}
+            </span>
+          ))}
+        </div>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <span className="inline-flex items-center rounded-full border border-line px-2 py-0.5 text-xs font-medium capitalize text-muted">
-            {event.displayStatus.replace(/_/g, " ")}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={event.displayStatus} />
+            {event.displayStatus === "submissions_open" && event.submissionCloseAt && (
+              <CountdownChip deadline={event.submissionCloseAt} />
+            )}
+          </div>
           <h1 className="mt-2 text-h1 font-semibold text-ink">{event.name}</h1>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">{event.description}</p>
         </div>
@@ -165,6 +271,12 @@ export default function EventPage() {
       {prizes.length > 0 && (
         <div className="mt-8">
           <h2 className="text-h2 font-semibold text-ink">Prizes</h2>
+          {/* Every prize shows which track it's for (or "Overall") plus its
+              description, so a track-scoped prize doesn't look identical
+              to an event-wide one. Found live: winnerCount (how many teams
+              actually win this prize, e.g. top 3 in a track) was only ever
+              shown on the organizer dashboard's edit form -- participants
+              had no way to know whether a prize had one winner or several. */}
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {prizes.map((p) => {
               const track = p.trackId ? tracks.find((t) => t.id === p.trackId) : null;
@@ -244,11 +356,21 @@ export default function EventPage() {
               key={s.id}
               className="flex h-full flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-sm transition hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
             >
+              <Link href={`/submissions/${s.id}`} className="block h-28 w-full shrink-0">
+                <ThumbnailOrInitials thumbnailUrl={s.thumbnailUrl} name={s.name} />
+              </Link>
+              {/* flex-col + flex-1 on this wrapper and mt-auto on the footer
+                  keep "Details & comments" aligned across every card in a
+                  row, regardless of how many lines the tagline wraps to —
+                  without it, a 2-line tagline on one card and a 1-line
+                  tagline on its neighbor push the footer link to two
+                  different heights. */}
               <div className="flex flex-1 flex-col p-4">
                 <div className="flex items-start justify-between gap-2">
                   <Link href={`/submissions/${s.id}`}>
                     <h3 className="text-h3 font-semibold text-ink hover:text-accent">{s.name}</h3>
                   </Link>
+                  {tally[s.id] !== undefined && <VoteBadge count={tally[s.id]} />}
                 </div>
                 <p className="mt-1 text-sm leading-relaxed text-muted">{s.tagline}</p>
                 <div className="mt-2 flex flex-wrap gap-1">

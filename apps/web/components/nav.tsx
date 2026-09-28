@@ -246,13 +246,13 @@ export function Nav() {
             <>
               <Link
                 href="/login"
-                className="rounded-md px-2.5 py-1.5 text-sm font-medium text-ink hover:bg-surface-alt"
+                className="rounded-md px-2.5 py-1.5 text-sm font-medium text-ink transition hover:bg-surface-alt motion-safe:active:scale-[0.97]"
               >
                 Sign in
               </Link>
               <Link
                 href="/register"
-                className="ml-1 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-dark"
+                className="ml-1 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white transition hover:bg-accent-dark motion-safe:active:scale-[0.97]"
               >
                 Register
               </Link>

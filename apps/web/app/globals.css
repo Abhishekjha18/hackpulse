@@ -5,7 +5,15 @@
 /* Design tokens as RGB triples (not hex) so tailwind.config.ts can wrap
    each one in rgb(var(--x) / <alpha-value>) — that's what lets utilities
    like `border-pulse/30` or `bg-ink/40` keep working with an opacity
-   modifier on top of a variable. */
+   modifier on top of a variable. Light values live on :root; the dark
+   values only ever apply under the explicit [data-theme="dark"]
+   attribute the toggle sets — never via a prefers-color-scheme media
+   query. This is deliberate: the whole reason `color-scheme` is
+   hardcoded below is a past incident where Brave/Chrome's forced-dark
+   heuristic repainted an undeclared-scheme page and mangled a chevron
+   SVG. A manual, explicit toggle avoids reintroducing that class of bug
+   — the page always declares a color-scheme, so the browser never has
+   to guess one for us. */
 :root {
   color-scheme: light;
 
@@ -79,6 +87,10 @@ body {
     sans-serif;
 }
 
+/* Explicit rather than left to inherit from body — headings and body share
+   one family (IBM Plex Sans) site-wide now; Archivo was dropped so hierarchy
+   comes from the text-display/h1/h2/h3 size tokens (tailwind.config.ts) and
+   weight alone, not a second typeface. */
 h1,
 h2,
 h3 {
@@ -89,6 +101,12 @@ h3 {
     sans-serif;
 }
 
+/* Every <select> in the app used to render as unstyled browser chrome —
+   white background, black text — while every input/button around it was
+   custom-styled. That mismatch was the exact "white on the dropdowns"
+   clash. The closed control is fully our own styling below; the open
+   option list stays OS-native (no CSS can restyle that popup), which is
+   normal and true of every site, not a defect. */
 select {
   appearance: none;
   background-color: rgb(var(--color-surface));
@@ -97,6 +115,34 @@ select {
   background-repeat: no-repeat;
   background-position: right 0.65rem center;
   background-size: 1rem;
+  /* Found live: a descender (the "y" in "participants only") was getting
+     clipped at the bottom — but only with IBM Plex Sans. Confirmed by
+     elimination: line-height (tried up to 2x), padding (symmetric and
+     asymmetric), flex + align-items:center, and overflow:visible each
+     landed on the identical clip point, pixel for pixel — none of them
+     touch it, because Chrome positions an appearance:none select's
+     displayed value using its own internal form-control text metrics,
+     not standard block layout. Swapping the font to Arial made the
+     descender render in full with zero other changes, which pins this on
+     IBM Plex Sans's descent metrics specifically tripping that internal
+     sizing. Using the system font here isn't a regression of the
+     single-font-family rule in practice — the dropdown's open option list
+     is already unstylable OS-native text (see comment above), so the
+     closed control now actually matches the font of the list it opens,
+     where before they silently differed anyway. */
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  /* !important: every <select> in the app also carries Tailwind's `px-3`
+     utility class in its JSX, and a class selector always beats this bare
+     element selector on specificity regardless of source order — so
+     without this, px-3's `padding-right: 0.75rem` silently wins and only
+     leaves 12px of clearance for the chevron icon above, instead of the
+     40px it needs. That's what caused the icon to sit on top of the
+     option text on any select whose text runs close to the edge
+     ("submissions open", "participants only", "authenticated", ...),
+     which is every long-label select across the site. */
   padding-right: 2.5rem !important;
 }
 
@@ -125,21 +171,6 @@ textarea:focus {
   outline: none;
   border-color: rgb(var(--color-accent));
   box-shadow: 0 0 0 3px rgb(var(--color-accent) / 0.15);
-}
-
-button:not(:disabled) {
-  transition:
-    background-color 150ms ease,
-    border-color 150ms ease,
-    color 150ms ease,
-    box-shadow 150ms ease,
-    opacity 150ms ease,
-    transform 100ms ease;
-}
-@media (prefers-reduced-motion: no-preference) {
-  button:not(:disabled):active {
-    transform: scale(0.97);
-  }
 }
 
 /* Motion for the decorative rings/dots/squares (DecorativeBackground,
@@ -192,6 +223,51 @@ button:not(:disabled) {
   }
 }
 
+/* Every button in the app gets a smooth hover/state transition and a
+   small tactile "press" on click, from this one rule rather than editing
+   every button's className individually — there's no shared Button
+   component, so this is the only way to cover all of them at once.
+   Scale-on-press is its own media query (not motion-safe: — that's a
+   Tailwind variant, not usable in plain CSS) so reduced-motion users keep
+   the color/shadow transitions (not really "motion") but skip the scale. */
+button:not(:disabled) {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease,
+    transform 100ms ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  button:not(:disabled):active {
+    transform: scale(0.97);
+  }
+}
+
+/* Route-change fade (page-transition.tsx), dropdown/dialog open transitions
+   (NavSearch, NotificationsBell, ConfirmDialog), and the landing page's
+   on-load hero entrance. All motion-safe:-gated at the call site, not here. */
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 @keyframes dialog-in {
   from {
     opacity: 0;
@@ -208,16 +284,6 @@ button:not(:disabled) {
   }
   to {
     opacity: 1;
-  }
-}
-@keyframes dropdown-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 @keyframes hero-in {

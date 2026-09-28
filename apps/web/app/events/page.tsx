@@ -25,7 +25,10 @@ const NEW_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 // useSearchParams() opts the whole subtree into client-side rendering and
 // needs a Suspense boundary around it per Next's own requirement — kept
-// as a thin wrapper so the rest of the page doesn't have to think about it.
+// as a thin wrapper so the rest of the page doesn't have to think about
+// it. Also what lets /events?search=... deep-link with the box
+// pre-filled — the nav's own global search (events, projects, people)
+// lives at /search instead; this page's box only ever searches events.
 export default function EventsPage() {
   return (
     <Suspense fallback={<LoadingState />}>
@@ -74,7 +77,9 @@ function EventsPageInner() {
   return (
     <div>
       <div className="flex items-start justify-between gap-4">
-        <h1 className="text-h1 font-semibold text-ink">Events</h1>
+        <div>
+          <h1 className="text-h1 font-semibold text-ink">Events</h1>
+        </div>
         {user && (
           <div className="flex shrink-0 items-center gap-2">
             <Link
@@ -83,6 +88,12 @@ function EventsPageInner() {
             >
               Create event
             </Link>
+            {/* Found live: this lived inside an *existing* event's
+                organizer dashboard, which made no sense — importing an
+                archive always creates a brand-new, unrelated event, never
+                touching the one whose dashboard you're on. Moved here,
+                next to Create event, since both are ways of getting a new
+                event onto this instance. */}
             <label className="cursor-pointer rounded-md border border-line bg-paper px-3 py-1.5 text-sm font-medium hover:bg-surface-alt">
               {importing ? "Importing…" : "Import from archive…"}
               <input

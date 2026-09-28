@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { Avatar, LoadingState, useConfirm } from "../../../../components/ui";
 import { api, ApiError } from "../../../../lib/api";
 import { useAuth } from "../../../../lib/auth-context";
 
@@ -13,6 +14,7 @@ type TeamWithMembers = Team & { members: TeamMember[] };
 export default function TeamPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const { user } = useAuth();
+  const { ask, dialog } = useConfirm();
   const [team, setTeam] = useState<TeamWithMembers | null | undefined>(undefined);
   const [name, setName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
@@ -57,7 +59,7 @@ export default function TeamPage() {
   }
 
   if (team === undefined) {
-    return <p className="text-sm text-muted">Loading…</p>;
+    return <LoadingState />;
   }
 
   // Found live: this page showed the create/join forms to everyone,
@@ -81,19 +83,19 @@ export default function TeamPage() {
     const isOwner = user?.id === team.ownerUserId;
 
     function removeMember(userId: string, label: string) {
-      if (!window.confirm(`Remove ${label} from the team?`)) {
-        return;
-      }
-      api
-        .delete(`/teams/${team!.id}/members/${userId}`)
-        .then(() => load())
-        .catch((err) =>
-          setError(err instanceof ApiError ? err.message : "Failed to remove member"),
-        );
+      ask(`Remove ${label} from the team?`, () => {
+        api
+          .delete(`/teams/${team!.id}/members/${userId}`)
+          .then(() => load())
+          .catch((err) =>
+            setError(err instanceof ApiError ? err.message : "Failed to remove member"),
+          );
+      });
     }
 
     return (
       <div className="max-w-lg">
+        {dialog}
         <h1 className="text-h1 font-semibold text-ink">{team.name}</h1>
         <p className="mt-1 text-sm leading-relaxed text-muted">
           Invite code:{" "}
@@ -111,6 +113,7 @@ export default function TeamPage() {
           {team.members.map((m) => (
             <li key={m.id} className="flex items-center justify-between gap-2 text-sm text-ink">
               <span className="flex items-center gap-2">
+                <Avatar name={m.userName} size={26} />
                 <Link href={`/users/${m.userId}`} className="hover:underline">
                   {m.userName}
                 </Link>
@@ -133,17 +136,16 @@ export default function TeamPage() {
           <button
             type="button"
             data-testid="team-leave"
-            onClick={() => {
-              if (!window.confirm("Leave this team?")) {
-                return;
-              }
-              api
-                .delete(`/teams/${team.id}/members/${user.id}`)
-                .then(() => load())
-                .catch((err) =>
-                  setError(err instanceof ApiError ? err.message : "Failed to leave team"),
-                );
-            }}
+            onClick={() =>
+              ask("Leave this team?", () => {
+                api
+                  .delete(`/teams/${team.id}/members/${user.id}`)
+                  .then(() => load())
+                  .catch((err) =>
+                    setError(err instanceof ApiError ? err.message : "Failed to leave team"),
+                  );
+              })
+            }
             className="mt-6 rounded-md border border-line bg-paper px-3 py-1.5 text-sm font-medium text-muted hover:bg-surface-alt"
           >
             Leave team

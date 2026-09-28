@@ -252,6 +252,8 @@ export function ThumbnailOrInitials({
 }
 
 // Same idea as ThumbnailOrInitials, for an event with no bannerImageUrl.
+// The dot-grid texture (see GraphPaperOverlay) makes it read as a
+// deliberate placeholder rather than a flat, blank box.
 export function EventBannerOrDefault({
   bannerImageUrl,
   name,
