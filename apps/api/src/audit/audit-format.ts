@@ -70,7 +70,7 @@ function nameOrFallback(
   if (!id) {
     return fallback;
   }
-  return names.get(id) ?? "Unknown user";
+  return names.get(id) ?? fallback;
 }
 
 function capitalize(s: string): string {

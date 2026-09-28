@@ -53,7 +53,7 @@ function makeChain(eventId: string, actions: string[]): Row[] {
       id: `id-${i}`,
       ...base,
       entryHash,
-      createdAt: new Date(Date.UTC(2026, 8, 25, 18, 29, i)),
+      createdAt: new Date(Date.UTC(2026, 8, 28, 14, 22, i)),
     });
     prevHash = entryHash;
   }
