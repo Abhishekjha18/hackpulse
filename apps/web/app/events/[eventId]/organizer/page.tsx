@@ -14,7 +14,7 @@ import type {
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Avatar } from "../../../../components/ui";
+import { Avatar, LoadingState } from "../../../../components/ui";
 import { api, ApiError } from "../../../../lib/api";
 
 const GALLERY_VISIBILITIES = ["open", "participants_only", "hidden"] as const;
@@ -31,6 +31,25 @@ const TABS: { id: TabId; label: string }[] = [
 ];
 
 type RubricWithCriteria = Rubric & { criteria: RubricCriterion[]; archived: boolean };
+
+interface Progress {
+  byJudge: { judgeUserId: string; judgeName: string; total: number; completed: number }[];
+  bySubmission: { submissionId: string; assigned: number; completed: number }[];
+  unassignedCount: number;
+}
+
+// One row per (judge, track): a judge's coverage is inherently track-scoped
+// in pairwise mode, so collapsing two tracks into one total the way rubric
+// mode's Progress.byJudge does would hide which specific track still needs
+// attention. See PairwiseService.getProgressForOrganizer.
+interface PairwiseProgressRow {
+  judgeUserId: string;
+  judgeName: string;
+  trackId: string;
+  trackName: string;
+  completed: number;
+  total: number;
+}
 
 export default function OrganizerPage() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -198,6 +217,37 @@ function OverviewTab({
   const [name, setName] = useState(event.name);
   const [description, setDescription] = useState(event.description);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<Progress | null>(null);
+  const [pairwiseProgress, setPairwiseProgress] = useState<PairwiseProgressRow[] | null>(null);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+
+  useEffect(() => {
+    const loadProgress = () =>
+      api
+        .get<Progress>(`/events/${event.id}/judging/progress`)
+        .then(setProgress)
+        .catch(() => {});
+    const loadPairwiseProgress = () =>
+      api
+        .get<PairwiseProgressRow[]>(`/events/${event.id}/pairwise/organizer-progress`)
+        .then(setPairwiseProgress)
+        .catch(() => {});
+    loadProgress();
+    loadPairwiseProgress();
+    api
+      .get<{ items: Submission[] }>(`/events/${event.id}/gallery?limit=200`)
+      .then((r) => setSubmissions(r.items))
+      .catch(() => {});
+    // FR-DASH-01's "near-real-time" progress: a judge scoring in another tab
+    // never touches this page, so without a poll the organizer would only
+    // see stale counts.
+    const id = setInterval(() => {
+      loadProgress();
+      loadPairwiseProgress();
+    }, 30_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event.id]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -315,6 +365,173 @@ function OverviewTab({
           }}
           className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
         />
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-h2 font-semibold text-ink">Judging progress</h2>
+        {event.scoringMode === "pairwise" ? (
+          // Previously fell through to the rubric-mode table below, which
+          // reads the judgeAssignments table -- pairwise mode never writes
+          // to that at all -- so it silently showed "No assignments yet"
+          // no matter how much real comparing had happened.
+          <>
+            {!pairwiseProgress ? (
+              <LoadingState className="mt-2" />
+            ) : pairwiseProgress.length === 0 ? (
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                No judges scoped to a track yet.
+              </p>
+            ) : (
+              <table
+                data-testid="pairwise-progress-by-judge"
+                className="mt-3 w-full max-w-lg text-sm"
+              >
+                <thead>
+                  <tr className="text-left text-muted">
+                    <th className="pb-1">Judge</th>
+                    <th className="pb-1">Track</th>
+                    <th className="pb-1">Compared</th>
+                    <th className="pb-1">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pairwiseProgress.map((row) => {
+                    const label =
+                      row.completed === 0
+                        ? "Not started"
+                        : row.completed >= row.total
+                          ? "Done"
+                          : "In progress";
+                    const badgeClass =
+                      row.completed === 0
+                        ? "bg-danger-soft text-danger"
+                        : row.completed >= row.total
+                          ? "bg-success-soft text-success"
+                          : "bg-accent-soft text-accent-dark";
+                    return (
+                      <tr
+                        key={`${row.judgeUserId}-${row.trackId}`}
+                        className="border-t border-line"
+                      >
+                        <td className="py-1">
+                          <span className="flex items-center gap-2">
+                            <Avatar name={row.judgeName} size={20} />
+                            {row.judgeName}
+                          </span>
+                        </td>
+                        <td className="py-1">{row.trackName}</td>
+                        <td className="py-1">
+                          {row.completed} / {row.total}
+                        </td>
+                        <td className="py-1">
+                          <span
+                            data-testid={`pairwise-judge-status-${row.judgeUserId}-${row.trackId}`}
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${badgeClass}`}
+                          >
+                            {label}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </>
+        ) : !progress ? (
+          <LoadingState className="mt-2" />
+        ) : progress.byJudge.length === 0 ? (
+          <p className="mt-2 text-sm leading-relaxed text-muted">No assignments yet.</p>
+        ) : (
+          <table data-testid="progress-by-judge" className="mt-3 w-full max-w-lg text-sm">
+            <thead>
+              <tr className="text-left text-muted">
+                <th className="pb-1">Judge</th>
+                <th className="pb-1">Completed</th>
+                <th className="pb-1">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {progress.byJudge.map((j) => {
+                const label =
+                  j.completed === 0
+                    ? "Not started"
+                    : j.completed === j.total
+                      ? "Done"
+                      : "In progress";
+                const badgeClass =
+                  j.completed === 0
+                    ? "bg-danger-soft text-danger"
+                    : j.completed === j.total
+                      ? "bg-success-soft text-success"
+                      : "bg-accent-soft text-accent-dark";
+                return (
+                  <tr key={j.judgeUserId} className="border-t border-line">
+                    <td className="py-1">
+                      <span className="flex items-center gap-2">
+                        <Avatar name={j.judgeName} size={20} />
+                        {j.judgeName}
+                      </span>
+                    </td>
+                    <td className="py-1">
+                      {j.completed} / {j.total}
+                    </td>
+                    <td className="py-1">
+                      <span
+                        data-testid={`judge-status-${j.judgeUserId}`}
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${badgeClass}`}
+                      >
+                        {label}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-h2 font-semibold text-ink">Per-submission coverage</h2>
+        {event.scoringMode === "pairwise" ? (
+          // A submission's "coverage" in pairwise mode isn't a single
+          // number the way rubric mode's assigned/completed count is --
+          // it's how many of its pairs each individual judge has compared,
+          // which the Judging progress table above already shows from the
+          // judge's side.
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            Per-submission coverage isn&rsquo;t tracked the same way in pairwise mode -- see Judging
+            progress above for each judge&rsquo;s comparison coverage per track.
+          </p>
+        ) : !progress ? (
+          <LoadingState className="mt-2" />
+        ) : progress.bySubmission.length === 0 ? (
+          <p className="mt-2 text-sm leading-relaxed text-muted">No assignments yet.</p>
+        ) : (
+          <table data-testid="progress-by-submission" className="mt-3 w-full max-w-lg text-sm">
+            <thead>
+              <tr className="text-left text-muted">
+                <th className="pb-1">Submission</th>
+                <th className="pb-1">Judged</th>
+              </tr>
+            </thead>
+            <tbody>
+              {progress.bySubmission.map((s) => {
+                const subName =
+                  submissions.find((sub) => sub.id === s.submissionId)?.name ?? s.submissionId;
+                return (
+                  <tr key={s.submissionId} className="border-t border-line">
+                    <td className="py-1">{subName}</td>
+                    <td className="py-1">
+                      {s.completed} / {s.assigned}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
