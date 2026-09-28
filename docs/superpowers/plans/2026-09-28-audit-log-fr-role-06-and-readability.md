@@ -59,7 +59,7 @@ function row(overrides: Partial<AuditLogRow>): AuditLogRow {
     resourceType: "submission",
     resourceId: "sub-1",
     metadata: {},
-    createdAt: new Date("2026-09-24T00:00:00Z"),
+    createdAt: new Date("2026-09-28T13:45:00Z"),
     ...overrides,
   };
 }
