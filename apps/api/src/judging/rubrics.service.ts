@@ -6,7 +6,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from "@nestjs/common";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 import type { Database } from "../db/client";
 import {
@@ -32,6 +32,28 @@ export class RubricsService {
     const [event] = await this.db.select().from(events).where(eq(events.id, eventId));
     if (!event) {
       throw new NotFoundException();
+    }
+
+    // Scoring resolves exactly one active rubric per track (or one
+    // event-wide), so a second one would be created, reported as a success
+    // and then never shown to any judge. Refuse it and say how to swap.
+    const [existing] = await this.db
+      .select()
+      .from(rubrics)
+      .where(
+        and(
+          eq(rubrics.eventId, eventId),
+          eq(rubrics.archived, false),
+          input.trackId === null ? isNull(rubrics.trackId) : eq(rubrics.trackId, input.trackId),
+        ),
+      );
+    if (existing) {
+      throw new ConflictException({
+        error: {
+          code: "CONFLICT",
+          message: `This ${input.trackId === null ? "event" : "track"} already has an active rubric ("${existing.name}"). Archive it first to replace it.`,
+        },
+      });
     }
 
     const totalWeight = input.criteria.reduce((sum, c) => sum + c.weight, 0);
