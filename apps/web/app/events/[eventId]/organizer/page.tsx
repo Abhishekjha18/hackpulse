@@ -2,9 +2,11 @@
 
 import type {
   Event,
+  EventRoleListEntry,
   Prize,
   Rubric,
   RubricCriterion,
+  Submission,
   Team,
   TeamMember,
   Track,
@@ -12,6 +14,7 @@ import type {
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { Avatar } from "../../../../components/ui";
 import { api, ApiError } from "../../../../lib/api";
 
 const GALLERY_VISIBILITIES = ["open", "participants_only", "hidden"] as const;
@@ -27,14 +30,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "results", label: "Results" },
 ];
 
-interface JudgeRow {
-  id: string;
-  userId: string;
-  userName: string;
-  trackIds: string[];
-}
-
-type RubricWithCriteria = Rubric & { criteria: RubricCriterion[] };
+type RubricWithCriteria = Rubric & { criteria: RubricCriterion[]; archived: boolean };
 
 export default function OrganizerPage() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -42,7 +38,7 @@ export default function OrganizerPage() {
   const [event, setEvent] = useState<Event | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [rubrics, setRubrics] = useState<RubricWithCriteria[]>([]);
-  const [judges, setJudges] = useState<JudgeRow[]>([]);
+  const [judges, setJudges] = useState<EventRoleListEntry[]>([]);
   const [prizes, setPrizes] = useState<Prize[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -61,7 +57,7 @@ export default function OrganizerPage() {
       .then(setRubrics)
       .catch(() => {});
     api
-      .get<JudgeRow[]>(`/events/${eventId}/judges`)
+      .get<EventRoleListEntry[]>(`/events/${eventId}/judges`)
       .then(setJudges)
       .catch(() => {});
     api
@@ -135,7 +131,7 @@ export default function OrganizerPage() {
             onError={setError}
           />
         )}
-        {tab === "results" && <ResultsTab eventId={eventId} judges={judges} />}
+        {tab === "results" && <ResultsTab eventId={eventId} judges={judges} rubrics={rubrics} />}
       </div>
     </div>
   );
@@ -629,13 +625,39 @@ function JudgesTab({
 }: {
   eventId: string;
   tracks: Track[];
-  judges: JudgeRow[];
+  judges: EventRoleListEntry[];
   onChange: () => void;
   onError: (msg: string) => void;
 }) {
   const [email, setEmail] = useState("");
   const [selectedTracks, setSelectedTracks] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+
+  const [assignTrackId, setAssignTrackId] = useState("");
+  const [minJudges, setMinJudges] = useState(2);
+  const [unassignedCount, setUnassignedCount] = useState(0);
+
+  const [manualTrackId, setManualTrackId] = useState("");
+  const [manualSubmissions, setManualSubmissions] = useState<Submission[]>([]);
+  const [selectedSubmissionIds, setSelectedSubmissionIds] = useState<string[]>([]);
+  const [selectedJudgeUserIds, setSelectedJudgeUserIds] = useState<string[]>([]);
+  const [manualResult, setManualResult] = useState<{
+    created: number;
+    skipped: { submissionId: string; judgeUserId: string; reason: string }[];
+  } | null>(null);
+
+  useEffect(() => {
+    api
+      .get<{ unassignedCount: number }>(`/events/${eventId}/judging/progress`)
+      .then((r) => setUnassignedCount(r.unassignedCount))
+      .catch(() => {});
+    // Bypasses the public gallery view; already filtered to submitted
+    // (assignable) entries.
+    api
+      .get<{ items: Submission[] }>(`/events/${eventId}/gallery?limit=200`)
+      .then((r) => setManualSubmissions(r.items))
+      .catch(() => {});
+  }, [eventId]);
 
   function toggleTrack(id: string) {
     setSelectedTracks((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
@@ -670,7 +692,7 @@ function JudgesTab({
   }
 
   async function removeJudge(eventRoleId: string, name: string) {
-    if (!window.confirm(`Remove ${name} as a judge?`)) {
+    if (!window.confirm(`Remove ${name} as a judge? Any of their in-progress or submitted scores will be permanently deleted.`)) {
       return;
     }
     setBusy(true);
@@ -684,21 +706,80 @@ function JudgesTab({
     }
   }
 
+  async function assignAlgorithmic(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await api.post(`/events/${eventId}/judging/assignments`, {
+        strategy: "algorithmic",
+        trackId: assignTrackId,
+        minJudgesPerSubmission: minJudges,
+      });
+      onChange();
+    } catch (err) {
+      onError(err instanceof ApiError ? err.message : "Failed to assign judges");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Separate from the other actions: needs to inspect the response body
+  // (created count, skipped reasons), not just a generic success message.
+  // A skipped conflict-of-interest pairing can be force-assigned by
+  // calling this again with force: true; a skipped track-scoping pairing
+  // can't.
+  async function submitManualAssignment(
+    submissionIds: string[],
+    judgeUserIds: string[],
+    force: boolean,
+  ) {
+    try {
+      const result = await api.post<{
+        created: unknown[];
+        skipped: { submissionId: string; judgeUserId: string; reason: string }[];
+      }>(`/events/${eventId}/judging/assignments`, {
+        strategy: "manual",
+        submissionIds,
+        judgeUserIds,
+        force,
+      });
+      setManualResult({ created: result.created.length, skipped: result.skipped });
+    } catch (err) {
+      onError(err instanceof ApiError ? err.message : "Failed to assign");
+    }
+  }
+
   return (
     <div className="max-w-lg">
       <ul data-testid="judge-list" className="space-y-1 text-sm text-ink">
         {judges.map((j) => (
           <li key={j.id} className="flex items-center justify-between gap-2">
-            <span>{j.userName}</span>
-            <button
-              type="button"
-              data-testid={`judge-remove-${j.id}`}
-              disabled={busy}
-              onClick={() => removeJudge(j.id, j.userName)}
-              className="text-xs text-danger hover:underline disabled:opacity-50"
-            >
-              Remove
-            </button>
+            <span>
+              {j.name} ({j.email})
+              {j.tracks.length > 0 ? ` on ${j.tracks.map((t) => t.name).join(", ")}` : ""}
+              {j.status !== "accepted" && (
+                <span
+                  className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${
+                    j.status === "pending"
+                      ? "bg-accent-soft text-accent-dark"
+                      : "bg-surface-alt text-muted"
+                  }`}
+                >
+                  {j.status === "pending" ? "Invited, awaiting response" : "Declined"}
+                </span>
+              )}
+            </span>
+            {j.status === "accepted" && (
+              <button
+                type="button"
+                data-testid={`judge-remove-${j.id}`}
+                disabled={busy}
+                onClick={() => removeJudge(j.id, j.name)}
+                className="text-xs text-danger hover:underline disabled:opacity-50"
+              >
+                Remove
+              </button>
+            )}
           </li>
         ))}
       </ul>
@@ -739,13 +820,240 @@ function JudgesTab({
       >
         Judge this myself
       </button>
+
+      <h2 className="mt-8 text-h2 font-semibold text-ink">Assign judges (algorithmic)</h2>
+      {unassignedCount > 0 && (
+        <p
+          data-testid="unassigned-nudge"
+          className="mt-1 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-ink"
+        >
+          {unassignedCount} submitted {unassignedCount === 1 ? "entry isn't" : "entries aren't"}{" "}
+          assigned to a judge yet. Run Assign to include {unassignedCount === 1 ? "it" : "them"}.
+        </p>
+      )}
+      <form onSubmit={assignAlgorithmic} className="mt-3 flex flex-wrap items-end gap-3">
+        <div>
+          <label className="block text-xs font-medium tracking-wide text-muted">Track</label>
+          <select
+            required
+            data-testid="assign-track-select"
+            value={assignTrackId}
+            onChange={(e) => setAssignTrackId(e.target.value)}
+            className="mt-1 rounded-md border border-line px-3 py-2 text-sm"
+          >
+            <option value="" disabled>
+              Choose
+            </option>
+            {tracks.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium tracking-wide text-muted">
+            Min judges/submission
+          </label>
+          <input
+            type="number"
+            min={1}
+            step={1}
+            data-testid="assign-min-judges"
+            value={minJudges}
+            onChange={(e) => {
+              const raw = Math.floor(Number(e.target.value));
+              setMinJudges(Number.isFinite(raw) ? Math.max(1, raw) : 1);
+            }}
+            className="mt-1 w-24 rounded-md border border-line px-3 py-2 text-sm"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={busy}
+          data-testid="assign-submit"
+          className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
+        >
+          Assign
+        </button>
+      </form>
+
+      <h2 className="mt-8 text-h2 font-semibold text-ink">Assign judges (manual)</h2>
+      <p className="mt-1 text-xs leading-relaxed text-muted">
+        Pick specific submissions and judges to pair directly. A judge not scoped to a
+        submission&rsquo;s track is always skipped; a declared conflict of interest (a shared
+        workplace with a team member) is skipped by default but can be forced through individually
+        below.
+      </p>
+
+      <div className="mt-3">
+        <label className="block text-xs font-medium tracking-wide text-muted">
+          Filter by track
+        </label>
+        <select
+          data-testid="manual-assign-track-filter"
+          value={manualTrackId}
+          onChange={(e) => setManualTrackId(e.target.value)}
+          className="mt-1 rounded-md border border-line px-3 py-2 text-sm"
+        >
+          <option value="">All tracks</option>
+          {tracks.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Submissions
+          </h3>
+          <ul
+            data-testid="manual-submission-list"
+            className="mt-2 max-h-64 space-y-1 overflow-y-auto rounded-md border border-line p-2 text-sm"
+          >
+            {manualSubmissions
+              .filter((s) => !manualTrackId || s.trackId === manualTrackId)
+              .map((s) => (
+                <li key={s.id}>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedSubmissionIds.includes(s.id)}
+                      onChange={(e) =>
+                        setSelectedSubmissionIds((prev) =>
+                          e.target.checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
+                        )
+                      }
+                    />
+                    {s.name}
+                  </label>
+                </li>
+              ))}
+            {manualSubmissions.filter((s) => !manualTrackId || s.trackId === manualTrackId)
+              .length === 0 && (
+              <li className="text-xs text-muted">
+                No submitted entries{manualTrackId ? " in this track" : ""} yet.
+              </li>
+            )}
+          </ul>
+        </div>
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Judges</h3>
+          <ul
+            data-testid="manual-judge-list"
+            className="mt-2 max-h-64 space-y-1 overflow-y-auto rounded-md border border-line p-2 text-sm"
+          >
+            {judges
+              .filter((j) => j.status === "accepted")
+              .filter((j) => !manualTrackId || j.tracks.some((t) => t.id === manualTrackId))
+              .map((j) => (
+                <li key={j.userId}>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedJudgeUserIds.includes(j.userId)}
+                      onChange={(e) =>
+                        setSelectedJudgeUserIds((prev) =>
+                          e.target.checked
+                            ? [...prev, j.userId]
+                            : prev.filter((id) => id !== j.userId),
+                        )
+                      }
+                    />
+                    {j.name}
+                  </label>
+                </li>
+              ))}
+            {judges
+              .filter((j) => j.status === "accepted")
+              .filter((j) => !manualTrackId || j.tracks.some((t) => t.id === manualTrackId))
+              .length === 0 && (
+              <li className="text-xs text-muted">
+                No accepted judges{manualTrackId ? " scoped to this track" : ""} yet.
+              </li>
+            )}
+          </ul>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        data-testid="manual-assign-submit"
+        disabled={selectedSubmissionIds.length === 0 || selectedJudgeUserIds.length === 0}
+        onClick={() => {
+          submitManualAssignment(selectedSubmissionIds, selectedJudgeUserIds, false);
+        }}
+        className="mt-3 rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Assign selected
+      </button>
+
+      {manualResult && (
+        <div className="mt-3 rounded-md border border-line bg-surface-alt p-3 text-sm">
+          <p>
+            {manualResult.created} assignment{manualResult.created === 1 ? "" : "s"} created.
+          </p>
+          {manualResult.skipped.length > 0 && (
+            <ul className="mt-2 space-y-1.5">
+              {manualResult.skipped.map((s, i) => {
+                const sub = manualSubmissions.find((x) => x.id === s.submissionId);
+                const judge = judges.find((j) => j.userId === s.judgeUserId);
+                const isConflict = s.reason.startsWith("conflict of interest");
+                return (
+                  <li
+                    key={`${s.submissionId}-${s.judgeUserId}-${i}`}
+                    className="flex items-center justify-between gap-2 text-xs text-muted"
+                  >
+                    <span>
+                      <strong>{judge?.name ?? s.judgeUserId}</strong> ×{" "}
+                      <strong>{sub?.name ?? s.submissionId}</strong>: {s.reason}
+                    </span>
+                    {isConflict && (
+                      <button
+                        type="button"
+                        data-testid={`manual-force-${s.submissionId}-${s.judgeUserId}`}
+                        onClick={() =>
+                          submitManualAssignment([s.submissionId], [s.judgeUserId], true)
+                        }
+                        className="shrink-0 rounded-md border border-line bg-paper px-2 py-1 text-xs font-medium hover:bg-surface-alt"
+                      >
+                        Force assign
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 type TeamForCert = Team & { members: TeamMember[] };
 
-function ResultsTab({ eventId, judges }: { eventId: string; judges: JudgeRow[] }) {
+interface OutlierJudge {
+  judgeUserId: string;
+  judgeName: string;
+  scoreCount: number;
+  nearZeroVariance: boolean;
+  divergesFromPeers: boolean;
+  correlationWithPeers: number | null;
+}
+
+function ResultsTab({
+  eventId,
+  judges,
+  rubrics,
+}: {
+  eventId: string;
+  judges: EventRoleListEntry[];
+  rubrics: RubricWithCriteria[];
+}) {
   const [unjudgedCount, setUnjudgedCount] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -753,6 +1061,9 @@ function ResultsTab({ eventId, judges }: { eventId: string; judges: JudgeRow[] }
   const [teamsForEvent, setTeamsForEvent] = useState<TeamForCert[]>([]);
   const [certType, setCertType] = useState<"participation" | "winner" | "judge">("participation");
   const [certRecipients, setCertRecipients] = useState<string[]>([]);
+  const [outlierJudges, setOutlierJudges] = useState<(OutlierJudge & { rubricName: string })[]>(
+    [],
+  );
 
   useEffect(() => {
     api
@@ -764,6 +1075,20 @@ function ResultsTab({ eventId, judges }: { eventId: string; judges: JudgeRow[] }
       .then(setTeamsForEvent)
       .catch(() => {});
   }, [eventId]);
+
+  // Fans out across every active rubric and tags each flagged judge with
+  // which rubric flagged them.
+  useEffect(() => {
+    const active = rubrics.filter((r) => !r.archived);
+    Promise.all(
+      active.map((r) =>
+        api
+          .get<OutlierJudge[]>(`/events/${eventId}/judging/results/outlier-judges?rubricId=${r.id}`)
+          .then((rows) => rows.map((row) => ({ ...row, rubricName: r.name })))
+          .catch(() => []),
+      ),
+    ).then((byRubric) => setOutlierJudges(byRubric.flat()));
+  }, [eventId, rubrics]);
 
   async function publish() {
     setBusy(true);
@@ -780,7 +1105,9 @@ function ResultsTab({ eventId, judges }: { eventId: string; judges: JudgeRow[] }
 
   const recipients =
     certType === "judge"
-      ? judges.map((j) => ({ userId: j.userId, label: j.userName }))
+      ? judges
+          .filter((j) => j.status === "accepted")
+          .map((j) => ({ userId: j.userId, label: j.name }))
       : teamsForEvent.flatMap((t) =>
           t.members.map((m) => ({ userId: m.userId, label: `${m.userName} (${t.name})` })),
         );
@@ -875,6 +1202,47 @@ function ResultsTab({ eventId, judges }: { eventId: string; judges: JudgeRow[] }
       >
         Generate certificates
       </button>
+
+      <h2 className="mt-8 text-h2 font-semibold text-ink">Outlier judges</h2>
+      <p className="mt-1 text-xs leading-relaxed text-muted">
+        Normalization already corrects for a judge who scores consistently high or low or with no
+        variance. This is for cases that deserve a human look: a judge whose scores show
+        essentially no spread, or whose relative ranking of submissions runs opposite to their
+        peers&rsquo;. Flagging isn&rsquo;t a penalty; their scores are still counted.
+      </p>
+      {outlierJudges.length === 0 ? (
+        <p className="mt-2 text-sm leading-relaxed text-muted">No outliers flagged.</p>
+      ) : (
+        <ul data-testid="outlier-judge-list" className="mt-3 space-y-2 text-sm">
+          {outlierJudges.map((o, i) => (
+            <li
+              key={`${o.judgeUserId}-${o.rubricName}-${i}`}
+              data-testid={`outlier-judge-${o.judgeUserId}`}
+              className="rounded-md border border-line p-2.5"
+            >
+              <span className="flex items-center gap-2">
+                <Avatar name={o.judgeName} size={20} />
+                <strong>{o.judgeName}</strong>
+                <span className="text-xs text-muted">
+                  {o.rubricName} &middot; {o.scoreCount} score{o.scoreCount === 1 ? "" : "s"}
+                </span>
+              </span>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {o.nearZeroVariance && (
+                  <span className="rounded-full bg-danger-soft px-2 py-0.5 text-xs font-medium text-danger">
+                    Near-zero variance
+                  </span>
+                )}
+                {o.divergesFromPeers && (
+                  <span className="rounded-full bg-danger-soft px-2 py-0.5 text-xs font-medium text-danger">
+                    Diverges from peer consensus (r={o.correlationWithPeers!.toFixed(2)})
+                  </span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
