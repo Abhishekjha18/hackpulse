@@ -161,7 +161,10 @@ export default function EventPage() {
             {prizes.map((p) => {
               const track = p.trackId ? tracks.find((t) => t.id === p.trackId) : null;
               return (
-                <div key={p.id} className="rounded-lg border border-line bg-surface-alt px-3 py-2.5">
+                <div
+                  key={p.id}
+                  className="rounded-lg border border-line bg-surface-alt px-3 py-2.5"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium text-ink">{p.name}</span>
                     <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-muted">
@@ -242,13 +245,19 @@ export default function EventPage() {
                 <p className="mt-1 text-sm leading-relaxed text-muted">{s.tagline}</p>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {s.techTags.map((t) => (
-                    <span key={t} className="rounded-full bg-surface-alt px-2 py-0.5 text-xs text-muted">
+                    <span
+                      key={t}
+                      className="rounded-full bg-surface-alt px-2 py-0.5 text-xs text-muted"
+                    >
                       {t}
                     </span>
                   ))}
                 </div>
                 <div className="mt-auto flex gap-3 pt-3">
-                  <Link href={`/submissions/${s.id}`} className="text-sm text-accent hover:underline">
+                  <Link
+                    href={`/submissions/${s.id}`}
+                    className="text-sm text-accent hover:underline"
+                  >
                     Details & comments →
                   </Link>
                   {s.liveUrl && (

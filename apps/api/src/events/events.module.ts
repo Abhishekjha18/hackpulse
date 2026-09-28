@@ -11,7 +11,12 @@ import { PrizesService } from "./prizes.service";
 
 @Module({
   imports: [EventRoleInvitesModule],
-  controllers: [EventsController, CustomQuestionsController, PrizesController, OrganizersController],
+  controllers: [
+    EventsController,
+    CustomQuestionsController,
+    PrizesController,
+    OrganizersController,
+  ],
   providers: [EventsService, CustomQuestionsService, PrizesService],
 })
 export class EventsModule {}

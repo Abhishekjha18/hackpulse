@@ -1,0 +1,15 @@
+{
+  "threshold": 1,
+  "minLines": 8,
+  "minTokens": 60,
+  "reporters": ["consoleFull"],
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.next/**",
+    "**/coverage/**",
+    "**/*.spec.ts",
+    "apps/api/drizzle/**"
+  ],
+  "absolute": true
+}
