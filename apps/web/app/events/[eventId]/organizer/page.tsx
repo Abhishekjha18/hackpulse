@@ -374,13 +374,54 @@ function SetupTab({
     }
   }
 
+  async function removeTrack(trackId: string, name: string) {
+    if (!window.confirm(`Remove track "${name}"?`)) {
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.delete(`/events/${eventId}/tracks/${trackId}`);
+      onChange();
+    } catch (err) {
+      onError(err instanceof ApiError ? err.message : "Failed to remove track");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeRubric(rubricId: string, name: string) {
+    if (!window.confirm(`Remove rubric "${name}"?`)) {
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.delete(`/events/${eventId}/judging/rubrics/${rubricId}`);
+      onChange();
+    } catch (err) {
+      onError(err instanceof ApiError ? err.message : "Failed to remove rubric");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="grid gap-8 sm:grid-cols-2">
       <div>
         <h2 className="text-h2 font-semibold text-ink">Tracks</h2>
-        <ul className="mt-3 space-y-1 text-sm text-ink">
+        <ul data-testid="track-list" className="mt-3 space-y-1 text-sm text-ink">
           {tracks.map((t) => (
-            <li key={t.id}>{t.name}</li>
+            <li key={t.id} className="flex items-center justify-between gap-2">
+              <span>{t.name}</span>
+              <button
+                type="button"
+                data-testid={`track-remove-${t.id}`}
+                disabled={busy}
+                onClick={() => removeTrack(t.id, t.name)}
+                className="text-xs text-danger hover:underline disabled:opacity-50"
+              >
+                Remove
+              </button>
+            </li>
           ))}
         </ul>
         <form onSubmit={createTrack} className="mt-4 flex gap-2">
@@ -403,11 +444,21 @@ function SetupTab({
 
       <div>
         <h2 className="text-h2 font-semibold text-ink">Rubrics</h2>
-        <ul className="mt-3 space-y-1 text-sm text-ink">
+        <ul data-testid="rubric-list" className="mt-3 space-y-1 text-sm text-ink">
           {rubrics.map((r) => (
-            <li key={r.id}>
-              {r.name}{" "}
-              <span className="text-muted">({r.criteria.length} criteria)</span>
+            <li key={r.id} className="flex items-center justify-between gap-2">
+              <span>
+                {r.name} <span className="text-muted">({r.criteria.length} criteria)</span>
+              </span>
+              <button
+                type="button"
+                data-testid={`rubric-remove-${r.id}`}
+                disabled={busy}
+                onClick={() => removeRubric(r.id, r.name)}
+                className="text-xs text-danger hover:underline disabled:opacity-50"
+              >
+                Remove
+              </button>
             </li>
           ))}
         </ul>
@@ -582,11 +633,37 @@ function JudgesTab({
     }
   }
 
+  async function removeJudge(eventRoleId: string, name: string) {
+    if (!window.confirm(`Remove ${name} as a judge?`)) {
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.delete(`/events/${eventId}/judges/${eventRoleId}`);
+      onChange();
+    } catch (err) {
+      onError(err instanceof ApiError ? err.message : "Failed to remove judge");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="max-w-lg">
-      <ul className="space-y-1 text-sm text-ink">
+      <ul data-testid="judge-list" className="space-y-1 text-sm text-ink">
         {judges.map((j) => (
-          <li key={j.id}>{j.userName}</li>
+          <li key={j.id} className="flex items-center justify-between gap-2">
+            <span>{j.userName}</span>
+            <button
+              type="button"
+              data-testid={`judge-remove-${j.id}`}
+              disabled={busy}
+              onClick={() => removeJudge(j.id, j.userName)}
+              className="text-xs text-danger hover:underline disabled:opacity-50"
+            >
+              Remove
+            </button>
+          </li>
         ))}
       </ul>
       <div className="mt-4 flex flex-wrap gap-2">
