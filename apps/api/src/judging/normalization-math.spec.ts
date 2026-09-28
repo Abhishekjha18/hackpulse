@@ -125,6 +125,75 @@ describe("computeNormalizedRanking", () => {
   });
 });
 
+describe("uninformative judges (F5 regression, found live)", () => {
+  // Live repro: two honest judges unanimously rank Q1 first; a third judge
+  // assigned only Q1 gives it a flat 3. Averaging that judge's z=0 into
+  // Q1's mean dragged the unanimous winner to rank 2.
+  const honest = [90, 85, 50, 40, 30];
+  const rows = (judgeUserId: string): SubmittedScoreRow[] =>
+    honest.map((v, i) => ({
+      submissionId: `q${i + 1}`,
+      judgeUserId,
+      rawWeightedScore: String(v),
+    }));
+
+  it("does not let a single-score judge demote the unanimous winner", () => {
+    const submitted: SubmittedScoreRow[] = [
+      ...rows("honest1"),
+      ...rows("honest2"),
+      { submissionId: "q1", judgeUserId: "flat", rawWeightedScore: "3" },
+    ];
+    const ranked = computeNormalizedRanking(submitted, computeJudgeStats(groupByJudge(submitted)));
+    expect(ranked[0].submissionId).toBe("q1");
+    expect(ranked.map((r) => r.submissionId)).toEqual(["q1", "q2", "q3", "q4", "q5"]);
+  });
+
+  it("does not let a multi-score all-3 judge shrink the submissions they touched", () => {
+    const submitted: SubmittedScoreRow[] = [
+      ...rows("honest1"),
+      ...rows("honest2"),
+      { submissionId: "q1", judgeUserId: "flat", rawWeightedScore: "3" },
+      { submissionId: "q2", judgeUserId: "flat", rawWeightedScore: "3" },
+    ];
+    const withFlat = computeNormalizedRanking(
+      submitted,
+      computeJudgeStats(groupByJudge(submitted)),
+    );
+    const honestOnly = submitted.filter((s) => s.judgeUserId !== "flat");
+    const without = computeNormalizedRanking(
+      honestOnly,
+      computeJudgeStats(groupByJudge(honestOnly)),
+    );
+    for (const r of without) {
+      expect(withFlat.find((w) => w.submissionId === r.submissionId)!.normalizedMean).toBeCloseTo(
+        r.normalizedMean,
+        9,
+      );
+    }
+  });
+
+  it("gives a submission scored only by uninformative judges a neutral 0", () => {
+    const submitted: SubmittedScoreRow[] = [
+      ...rows("honest1"),
+      { submissionId: "solo", judgeUserId: "flat", rawWeightedScore: "3" },
+    ];
+    const ranked = computeNormalizedRanking(submitted, computeJudgeStats(groupByJudge(submitted)));
+    expect(ranked.find((r) => r.submissionId === "solo")!.normalizedMean).toBe(0);
+  });
+
+  it("flags a judge with too few scores for organizer review", () => {
+    const submitted: SubmittedScoreRow[] = [
+      ...rows("honest1"),
+      { submissionId: "q1", judgeUserId: "one", rawWeightedScore: "3" },
+    ];
+    const flagged = detectOutlierJudges(submitted, computeJudgeStats(groupByJudge(submitted)));
+    const one = flagged.find((f) => f.judgeUserId === "one");
+    expect(one).toBeDefined();
+    expect(one!.tooFewScores).toBe(true);
+    expect(flagged.find((f) => f.judgeUserId === "honest1")).toBeUndefined();
+  });
+});
+
 describe("detectOutlierJudges", () => {
   // Known-answer scenario from JUDGING.md §3: three judges broadly agree on
   // relative order, a fourth scores in the exact opposite order (should be

@@ -143,6 +143,7 @@ interface OutlierJudge {
   judgeName: string;
   scoreCount: number;
   nearZeroVariance: boolean;
+  tooFewScores: boolean;
   divergesFromPeers: boolean;
   correlationWithPeers: number | null;
 }
@@ -2038,6 +2039,11 @@ export default function OrganizerPage() {
                       {o.nearZeroVariance && (
                         <span className="rounded-full bg-danger-soft px-2 py-0.5 text-xs font-medium text-danger">
                           Near-zero variance
+                        </span>
+                      )}
+                      {o.tooFewScores && (
+                        <span className="rounded-full bg-danger-soft px-2 py-0.5 text-xs font-medium text-danger">
+                          Too few scores to calibrate
                         </span>
                       )}
                       {o.divergesFromPeers && (

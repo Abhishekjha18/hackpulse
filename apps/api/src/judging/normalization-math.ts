@@ -25,6 +25,19 @@ export const MIN_SHARED_SUBMISSIONS_FOR_CORRELATION = 3;
 // peers' mean z-score on the same submissions is treated as "systematic
 // divergence," not just disagreement.
 export const DIVERGENCE_CORRELATION_THRESHOLD = -0.3;
+// A judge's mean/stddev needs a handful of points to mean anything; below
+// this the organizer is told so (FR-NORM-04), though the scores still count.
+export const MIN_SCORES_FOR_RELIABLE_STATS = 3;
+
+// A judge whose scores don't vary (every score identical, or only one score)
+// gave no relative-quality signal, so there is nothing to normalize. Their
+// z is 0 by definition, but that 0 must not be *averaged in*: it would drag
+// every submission they touched toward the middle, which demotes a
+// unanimous winner. Found live: one flat "3" on the frontrunner flipped
+// rank 1 and 2 against two honest judges who agreed.
+export function isInformative(stats: JudgeStats): boolean {
+  return stats.stddev >= NEAR_ZERO_VARIANCE_THRESHOLD;
+}
 
 export function groupByJudge(submitted: SubmittedScoreRow[]): Map<string, number[]> {
   const byJudge = new Map<string, number[]>();
@@ -88,10 +101,11 @@ export function computeNormalizedRanking(
   for (const row of submitted) {
     const raw = Number(row.rawWeightedScore);
     const stats = judgeStats.get(row.judgeUserId)!;
-    const normalized = zScore(raw, stats);
     const entry = bySubmission.get(row.submissionId) ?? { raw: [], normalized: [] };
     entry.raw.push(raw);
-    entry.normalized.push(normalized);
+    if (isInformative(stats)) {
+      entry.normalized.push(zScore(raw, stats));
+    }
     bySubmission.set(row.submissionId, entry);
   }
 
@@ -99,7 +113,9 @@ export function computeNormalizedRanking(
     .map(([submissionId, { raw, normalized }]) => ({
       submissionId,
       rawMean: raw.reduce((a, b) => a + b, 0) / raw.length,
-      normalizedMean: normalized.reduce((a, b) => a + b, 0) / normalized.length,
+      // No informative judge scored it: neutral 0 rather than NaN.
+      normalizedMean:
+        normalized.length === 0 ? 0 : normalized.reduce((a, b) => a + b, 0) / normalized.length,
     }))
     .sort((a, b) => b.normalizedMean - a.normalizedMean)
     .map((a, i) => ({ ...a, rank: i + 1 }));
@@ -109,6 +125,7 @@ export interface OutlierFlag {
   judgeUserId: string;
   scoreCount: number;
   nearZeroVariance: boolean;
+  tooFewScores: boolean;
   divergesFromPeers: boolean;
   correlationWithPeers: number | null;
 }
@@ -146,6 +163,7 @@ export function detectOutlierJudges(
     const stats = judgeStats.get(judgeId)!;
     const scoreCount = byJudge.get(judgeId)!.length;
     const nearZeroVariance = scoreCount >= 2 && stats.stddev < NEAR_ZERO_VARIANCE_THRESHOLD;
+    const tooFewScores = scoreCount < MIN_SCORES_FOR_RELIABLE_STATS;
 
     const mine: number[] = [];
     const peerMeans: number[] = [];
@@ -165,11 +183,12 @@ export function detectOutlierJudges(
       divergesFromPeers = correlationWithPeers < DIVERGENCE_CORRELATION_THRESHOLD;
     }
 
-    if (nearZeroVariance || divergesFromPeers) {
+    if (nearZeroVariance || tooFewScores || divergesFromPeers) {
       flagged.push({
         judgeUserId: judgeId,
         scoreCount,
         nearZeroVariance,
+        tooFewScores,
         divergesFromPeers,
         correlationWithPeers,
       });
