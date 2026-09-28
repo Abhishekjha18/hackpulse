@@ -20,6 +20,7 @@ import {
 import { DB } from "../db/tokens";
 
 const WEIGHT_SUM_TOLERANCE = 0.001;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable()
 export class RubricsService {
@@ -97,8 +98,19 @@ export class RubricsService {
     );
   }
 
-  async findOne(rubricId: string) {
-    const [rubric] = await this.db.select().from(rubrics).where(eq(rubrics.id, rubricId));
+  // Scoped by eventId, not just rubricId: the route's @Roles check only
+  // proves the caller organizes/judges the event in the URL, so without
+  // this a rubric id from another event would be readable through it (F3).
+  // A malformed id 404s like a missing one instead of surfacing as a raw
+  // uuid-cast driver error.
+  async findOne(eventId: string, rubricId: string) {
+    if (!UUID_RE.test(rubricId ?? "")) {
+      throw new NotFoundException();
+    }
+    const [rubric] = await this.db
+      .select()
+      .from(rubrics)
+      .where(and(eq(rubrics.id, rubricId), eq(rubrics.eventId, eventId)));
     if (!rubric) {
       throw new NotFoundException();
     }

@@ -29,8 +29,8 @@ export class RubricsController {
 
   @Get(":rubricId")
   @Roles("organizer", "judge")
-  findOne(@Param("rubricId") rubricId: string) {
-    return this.rubrics.findOne(rubricId);
+  findOne(@Param("eventId") eventId: string, @Param("rubricId") rubricId: string) {
+    return this.rubrics.findOne(eventId, rubricId);
   }
 
   @Delete(":rubricId")
