@@ -91,10 +91,6 @@ pnpm run dup-check      # jscpd, flags copy pasted code above a small threshold
 
 A pre-commit hook runs Prettier on staged files; CI runs the full set (format, typecheck, lint, test, build) on every push, since a hook alone can be skipped.
 
-## License
-
-MIT; see [LICENSE](LICENSE).
-
 ## Seeded reference data
 
 On first boot, `apps/api/src/db/load-fixtures.ts` loads [fixtures.json](fixtures.json) into the database. It loads once and skips on later boots. `docker compose down -v` wipes the volume, so the next `docker compose up` reseeds from scratch.
@@ -127,3 +123,7 @@ The fixture data is deliberately awkward, so the judging system gets exercised o
 - **The event's audit log starts empty.** Seeding writes straight to the database, not through the API, so nothing is logged until someone acts on the event.
 
 To see the judging results yourself, sign in as the organizer, get the rubric id from `GET /api/v1/events/d06f00d0-0000-4000-8000-000000000000/judging/rubrics`, then call `.../judging/results/normalization-proof?rubricId=<id>` and `.../judging/results/outlier-judges?rubricId=<id>` on the same event.
+
+## License
+
+MIT; see [LICENSE](LICENSE).
