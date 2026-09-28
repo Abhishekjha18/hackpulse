@@ -27,6 +27,12 @@ export function Nav() {
           {loading ? null : user ? (
             <>
               <Link
+                href="/teams/mine"
+                className="rounded-md px-2.5 py-1.5 text-sm font-medium text-muted hover:bg-surface-alt hover:text-ink"
+              >
+                My teams
+              </Link>
+              <Link
                 href={`/users/${user.id}`}
                 data-testid="nav-profile-link"
                 className="rounded-md px-2.5 py-1.5 text-sm font-medium text-muted hover:bg-surface-alt hover:text-ink"
