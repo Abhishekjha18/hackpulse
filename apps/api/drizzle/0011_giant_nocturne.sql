@@ -1,0 +1,1 @@
+ALTER TABLE "rubrics" ADD COLUMN "archived" boolean DEFAULT false NOT NULL;

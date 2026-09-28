@@ -12,10 +12,10 @@ pitch = "A self-hosted, API-first hackathon submission-and-judging portal with b
 # against a clean volume — before rerunning run.py after a fresh boot,
 # search the api container's logs ("Test logins") and paste in whatever
 # it just printed.
-organizer   = "Cookie: __Secure-hackpulse.session_token=IvwqkjGLyDvlJ1AeX7BITkMeOFLunD4p.R6Bvy0XC%2BkqionKekMy8gKDcVw5KY%2Br%2FlNTkmLccop8%3D"
-judge_a     = "Cookie: __Secure-hackpulse.session_token=FX6JjMHtshqMkkThqnNM4woK6vSc8b4s.tZQ224U%2FJXS%2FIbCfi8KxCcXWucEx9F6Z3kPui2P4Tr0%3D"
-judge_b     = "Cookie: __Secure-hackpulse.session_token=c5bMKLsVkGzHt7vljmxgUoebuF87xqpq.2%2FR6LeJX3DHYyD8voN1RqoqJQWwN9ezViSaHXrICcIg%3D"
-participant = "Cookie: __Secure-hackpulse.session_token=8ovFwGhc0GDJ2baN0WzYXXmaaCQ5YCaJ.h9e5h41luvtRm0loZr3HovLR4Jp%2BTIayJkYok698nAE%3D"
+organizer   = "Cookie: __Secure-hackpulse.session_token=dPlyQ8vd7bPTQfem72L9fYMK5zr115hC.hPhnfMtwoyp0Rb3oyjqyh2KyCkvbNklMhDejrKPvA0o%3D"
+judge_a     = "Cookie: __Secure-hackpulse.session_token=hT9piv2JnTK0paMJflrYJ4hvYGSrmVV0.nwqprNHXyqMebsdgRM5hiwwFvf7nDFfbqEw6dZJINkE%3D"
+judge_b     = "Cookie: __Secure-hackpulse.session_token=EhSH6eJvymz76lhjqw1ia4pj7An71Y4h.vugU65QrfSbRD%2BAcKttH7%2FXPG0NnAOcrGmUM71pDZVA%3D"
+participant = "Cookie: __Secure-hackpulse.session_token=C9YLINgLUMfmMBoYJGNABsr37SpOPT48.6%2Bct8rQrJJ53mLbtGufY0hSZf%2Bm%2FXA7sO7avZQuaiXo%3D"
 
 [routes]
 # All four point at the fixture-backed event load-fixtures.ts creates on
