@@ -14,6 +14,7 @@ import { EventsModule } from "./events/events.module";
 import { GalleryModule } from "./gallery/gallery.module";
 import { HealthModule } from "./health/health.module";
 import { JudgingModule } from "./judging/judging.module";
+import { ProfilesModule } from "./profiles/profiles.module";
 import { QueueModule } from "./queue/queue.module";
 import { ResultsModule } from "./results/results.module";
 import { SubmissionsModule } from "./submissions/submissions.module";
@@ -42,6 +43,7 @@ import { WebhooksModule } from "./webhooks/webhooks.module";
     CommentsModule,
     ResultsModule,
     BulkModule,
+    ProfilesModule,
   ],
   providers: [
     // Order matters: AuthGuard resolves request.user first, RolesGuard
