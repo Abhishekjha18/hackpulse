@@ -7,6 +7,11 @@ import path from "node:path";
 import { and, eq } from "drizzle-orm";
 
 import { auth } from "../auth/auth.config";
+import {
+  computeJudgeStats,
+  computeNormalizedRanking,
+  groupByJudge,
+} from "../judging/normalization-math";
 import { generateInviteCode } from "../teams/invite-code";
 import { db, pool } from "./client";
 import {
@@ -137,12 +142,12 @@ async function printLoginCookie(label: string, email: string): Promise<void> {
   console.log(`  ${label.padEnd(12)} Cookie: ${cookiePair}`);
 }
 
-/** Per-judge z-score normalization (see JUDGING.md), computed here the
- * same way NormalizationService does, so the fixture data's own awkward
- * cases (a judge who scores every project identically) show up correctly
- * in GET .../judging/results and .../normalization-proof from the moment
- * the instance boots, not only after someone submits a fresh score
- * through the running app. */
+/** Per-judge z-score normalization (see JUDGING.md). Uses the very same
+ * math as NormalizationService (normalization-math.ts) rather than a copy,
+ * so the fixture data's own awkward cases (a judge who scores every project
+ * identically) show up correctly in GET .../judging/results and
+ * .../normalization-proof from the moment the instance boots, and can never
+ * drift from what the running app computes. */
 async function recomputeNormalization(rubricId: string): Promise<void> {
   const submitted = await db
     .select({
@@ -154,46 +159,16 @@ async function recomputeNormalization(rubricId: string): Promise<void> {
     .innerJoin(judgeAssignments, eq(judgeAssignments.id, scores.judgeAssignmentId))
     .where(and(eq(scores.rubricId, rubricId), eq(scores.status, "submitted")));
 
-  const byJudge = new Map<string, number[]>();
-  for (const row of submitted) {
-    const arr = byJudge.get(row.judgeUserId) ?? [];
-    arr.push(Number(row.rawWeightedScore));
-    byJudge.set(row.judgeUserId, arr);
-  }
-  const statsByJudge = new Map<string, { mean: number; stddev: number }>();
-  for (const [judgeId, values] of byJudge) {
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    const variance = values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length;
-    statsByJudge.set(judgeId, { mean, stddev: Math.sqrt(variance) });
-  }
+  const ranked = computeNormalizedRanking(submitted, computeJudgeStats(groupByJudge(submitted)));
 
-  const bySubmission = new Map<string, { raw: number[]; normalized: number[] }>();
-  for (const row of submitted) {
-    const raw = Number(row.rawWeightedScore);
-    const stats = statsByJudge.get(row.judgeUserId)!;
-    const normalized = stats.stddev === 0 ? 0 : (raw - stats.mean) / stats.stddev;
-    const entry = bySubmission.get(row.submissionId) ?? { raw: [], normalized: [] };
-    entry.raw.push(raw);
-    entry.normalized.push(normalized);
-    bySubmission.set(row.submissionId, entry);
-  }
-
-  const ranked = [...bySubmission.entries()]
-    .map(([submissionId, { raw, normalized }]) => ({
-      submissionId,
-      rawMean: raw.reduce((a, b) => a + b, 0) / raw.length,
-      normalizedMean: normalized.reduce((a, b) => a + b, 0) / normalized.length,
-    }))
-    .sort((a, b) => b.normalizedMean - a.normalizedMean);
-
-  for (const [i, r] of ranked.entries()) {
+  for (const r of ranked) {
     await db.insert(normalizedResults).values({
       submissionId: r.submissionId,
       rubricId,
       method: "z_score",
       rawMean: r.rawMean.toString(),
       normalizedMean: r.normalizedMean.toString(),
-      rank: i + 1,
+      rank: r.rank,
     });
   }
 }
