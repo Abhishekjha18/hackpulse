@@ -131,7 +131,9 @@ export default function OrganizerPage() {
             onError={setError}
           />
         )}
-        {tab === "results" && <ResultsTab eventId={eventId} judges={judges} rubrics={rubrics} />}
+        {tab === "results" && (
+          <ResultsTab eventId={eventId} judges={judges} rubrics={rubrics} event={event} />
+        )}
       </div>
     </div>
   );
@@ -1052,10 +1054,12 @@ function ResultsTab({
   eventId,
   judges,
   rubrics,
+  event,
 }: {
   eventId: string;
   judges: EventRoleListEntry[];
   rubrics: RubricWithCriteria[];
+  event: Event | null;
 }) {
   const [unjudgedCount, setUnjudgedCount] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -1065,6 +1069,10 @@ function ResultsTab({
   const [certType, setCertType] = useState<"participation" | "winner" | "judge">("participation");
   const [certRecipients, setCertRecipients] = useState<string[]>([]);
   const [outlierJudges, setOutlierJudges] = useState<(OutlierJudge & { rubricName: string })[]>([]);
+  const [voteTally, setVoteTally] = useState<
+    { submissionId: string; totalVotes: number; voterCount: number }[]
+  >([]);
+  const [submissions, setSubmissions] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     api
@@ -1075,7 +1083,30 @@ function ResultsTab({
       .get<TeamForCert[]>(`/events/${eventId}/teams`)
       .then(setTeamsForEvent)
       .catch(() => {});
+    api
+      .get<{ items: { id: string; name: string }[] }>(`/events/${eventId}/gallery?limit=200`)
+      .then((r) => setSubmissions(r.items))
+      .catch(() => {});
   }, [eventId]);
+
+  // Visible to organizers only, before or after publish (FR-RESULT-02).
+  // Refreshes automatically every 30 seconds so the count doesn't go
+  // stale while the tab stays open.
+  useEffect(() => {
+    if (!event || event.votingMode === "disabled") {
+      return;
+    }
+    const load = () =>
+      api
+        .get<{ submissionId: string; totalVotes: number; voterCount: number }[]>(
+          `/events/${eventId}/votes/tally`,
+        )
+        .then(setVoteTally)
+        .catch(() => {});
+    load();
+    const id = setInterval(load, 30_000);
+    return () => clearInterval(id);
+  }, [eventId, event]);
 
   // Fans out across every active rubric and tags each flagged judge with
   // which rubric flagged them.
@@ -1203,6 +1234,43 @@ function ResultsTab({
       >
         Generate certificates
       </button>
+
+      {event && event.votingMode !== "disabled" && (
+        <>
+          <h2 className="mt-8 text-h2 font-semibold text-ink">Vote tally</h2>
+          <p className="mt-1 text-xs leading-relaxed text-muted">
+            Visible to organizers only, before or after publish (FR-RESULT-02). Refreshes
+            automatically every 30 seconds.
+          </p>
+          {voteTally.length === 0 ? (
+            <p className="mt-3 text-sm text-muted">No votes cast yet.</p>
+          ) : (
+            <table className="mt-3 w-full max-w-lg text-sm">
+              <thead>
+                <tr className="text-left text-muted">
+                  <th className="pb-1">Submission</th>
+                  <th className="pb-1">Total votes</th>
+                  <th className="pb-1">Voters</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...voteTally]
+                  .sort((a, b) => b.totalVotes - a.totalVotes)
+                  .map((row) => (
+                    <tr key={row.submissionId} className="border-t border-line">
+                      <td className="py-1">
+                        {submissions.find((s) => s.id === row.submissionId)?.name ??
+                          row.submissionId.slice(0, 8)}
+                      </td>
+                      <td className="py-1">{row.totalVotes}</td>
+                      <td className="py-1">{row.voterCount}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          )}
+        </>
+      )}
 
       <h2 className="mt-8 text-h2 font-semibold text-ink">Outlier judges</h2>
       <p className="mt-1 text-xs leading-relaxed text-muted">
