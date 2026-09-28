@@ -1,7 +1,9 @@
 import { Module } from "@nestjs/common";
 
+import { AuditModule } from "../audit/audit.module";
 import { EventRoleInvitesModule } from "../common/event-roles/event-role-invites.module";
 import { JudgeTrackScopeModule } from "../common/judge-track-scope.module";
+import { WebhooksModule } from "../webhooks/webhooks.module";
 import { AssignmentsController } from "./assignments.controller";
 import { AssignmentsService } from "./assignments.service";
 import { AssignmentOwnershipGuard } from "./guards/assignment-ownership.guard";
@@ -18,14 +20,14 @@ import { ScoringController } from "./scoring.controller";
 import { ScoringService } from "./scoring.service";
 
 @Module({
-  imports: [EventRoleInvitesModule, JudgeTrackScopeModule],
+  imports: [WebhooksModule, EventRoleInvitesModule, AuditModule, JudgeTrackScopeModule],
   controllers: [
     JudgesController,
     RubricsController,
     AssignmentsController,
     ScoringController,
-    PairwiseController,
     ResultsController,
+    PairwiseController,
   ],
   providers: [
     JudgesService,
