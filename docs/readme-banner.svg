@@ -1,0 +1,49 @@
+<svg width="900" height="168" viewBox="0 0 900 168" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HackPulse: registration, team, submission, judging, results, certificate, all in one product">
+  <rect x="2" y="2" width="896" height="164" rx="20" fill="#ffffff" stroke="#7cc242" stroke-width="4"/>
+  <text x="28" y="38" font-family="Segoe UI, system-ui, -apple-system, sans-serif" font-size="24" font-weight="700" fill="#1f2937">HackPulse</text>
+  <text x="28" y="60" font-family="Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#4b5563">A self-hosted hackathon portal. Registration through certificates, in one product.</text>
+
+  <!-- lifecycle pipeline: six stages, connected by arrows -->
+  <g font-family="Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" font-weight="600">
+    <!-- Register -->
+    <rect x="28" y="92" width="118" height="42" rx="14" fill="#3b5f96" stroke="#7cc242" stroke-width="2.5"/>
+    <text x="87" y="118" text-anchor="middle" fill="#ffffff">Register</text>
+
+    <path d="M150 113 L172 113" stroke="#7cc242" stroke-width="2"/>
+    <path d="M166 108 L174 113 L166 118" stroke="#7cc242" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Team -->
+    <rect x="176" y="92" width="118" height="42" rx="14" fill="#3b5f96" stroke="#7cc242" stroke-width="2.5"/>
+    <text x="235" y="118" text-anchor="middle" fill="#ffffff">Team</text>
+
+    <path d="M298 113 L320 113" stroke="#7cc242" stroke-width="2"/>
+    <path d="M314 108 L322 113 L314 118" stroke="#7cc242" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Submit -->
+    <rect x="324" y="92" width="118" height="42" rx="14" fill="#3b5f96" stroke="#7cc242" stroke-width="2.5"/>
+    <text x="383" y="118" text-anchor="middle" fill="#ffffff">Submit</text>
+
+    <path d="M446 113 L468 113" stroke="#7cc242" stroke-width="2"/>
+    <path d="M462 108 L470 113 L462 118" stroke="#7cc242" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Judge -->
+    <rect x="472" y="92" width="118" height="42" rx="14" fill="#3b5f96" stroke="#7cc242" stroke-width="2.5"/>
+    <text x="531" y="118" text-anchor="middle" fill="#ffffff">Judge</text>
+
+    <path d="M594 113 L616 113" stroke="#7cc242" stroke-width="2"/>
+    <path d="M610 108 L618 113 L610 118" stroke="#7cc242" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Results -->
+    <rect x="620" y="92" width="118" height="42" rx="14" fill="#3b5f96" stroke="#7cc242" stroke-width="2.5"/>
+    <text x="679" y="118" text-anchor="middle" fill="#ffffff">Results</text>
+
+    <path d="M742 113 L764 113" stroke="#7cc242" stroke-width="2"/>
+    <path d="M758 108 L766 113 L758 118" stroke="#7cc242" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Certificate -->
+    <rect x="768" y="92" width="104" height="42" rx="14" fill="#3b5f96" stroke="#7cc242" stroke-width="2.5"/>
+    <text x="820" y="118" text-anchor="middle" fill="#ffffff" font-size="12">Certificate</text>
+  </g>
+
+  <text x="28" y="154" font-family="Segoe UI, system-ui, -apple-system, sans-serif" font-size="11" fill="#6b7280">Rubric or pairwise judging. Automatic or manual event lifecycle. One command, offline, no external services.</text>
+</svg>
