@@ -28,6 +28,20 @@ describe("weightedRawScore", () => {
     ];
     expect(weightedRawScore(criteria, stored)).toBeCloseTo(2.285 + 0.6 + 0.6, 9);
   });
+
+  it("stays inside the scale when weights sum slightly off 1 (F1)", () => {
+    // Weights are allowed to sum to 1.0009 (rounding tolerance); an all-5
+    // evaluation must still be 5, not 5.0045.
+    const drifted = [
+      { id: "a", weight: "0.5005" },
+      { id: "b", weight: "0.5004" },
+    ];
+    const stored = [
+      { rubricCriterionId: "a", value: "5.00" },
+      { rubricCriterionId: "b", value: "5.00" },
+    ];
+    expect(weightedRawScore(drifted, stored)).toBeCloseTo(5, 9);
+  });
 });
 
 describe("findDuplicateCriterionId", () => {

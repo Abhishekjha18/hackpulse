@@ -21,10 +21,15 @@ export function weightedRawScore(
   stored: StoredCriterionValue[],
 ): number {
   const weightByCriterion = new Map(criteria.map((c) => [c.id, Number(c.weight)]));
-  return stored.reduce(
+  const weighted = stored.reduce(
     (sum, v) => sum + Number(v.value) * (weightByCriterion.get(v.rubricCriterionId) ?? 0),
     0,
   );
+  // Rubric creation tolerates weights summing to 1 ± 0.001. Dividing by the
+  // actual total keeps an all-max evaluation at scaleMax (5, not 5.0045),
+  // so a raw score can never leave the rubric's own scale.
+  const totalWeight = criteria.reduce((sum, c) => sum + Number(c.weight), 0);
+  return totalWeight > 0 ? weighted / totalWeight : weighted;
 }
 
 // A body naming the same criterion twice is ambiguous (which value wins?),

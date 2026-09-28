@@ -61,7 +61,16 @@ export type MyEventInvite = z.infer<typeof MyEventInvite>;
 export const RubricCriterionInput = z.object({
   name: z.string().min(1),
   description: z.string().default(""),
-  weight: z.number().positive().max(1),
+  // numeric(5,4) in the DB: anything finer than 0.0001 is silently rounded
+  // on write (0.00001 became 0.0000, a criterion that can never count), so
+  // the sum validated would not be the sum stored. Reject it up front.
+  weight: z
+    .number()
+    .min(0.0001)
+    .max(1)
+    .refine((w) => Math.abs(w * 10000 - Math.round(w * 10000)) < 1e-6, {
+      message: "weight can have at most 4 decimal places",
+    }),
 });
 export type RubricCriterionInput = z.infer<typeof RubricCriterionInput>;
 

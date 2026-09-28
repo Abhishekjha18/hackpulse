@@ -15,7 +15,7 @@ Two modes, both structurally track-scoped (`AssignmentsService`, `apps/api/src/j
 
 ## 2. Scoring
 
-A rubric (`RubricsService`) is a named set of criteria, each with a weight; weights are validated to sum to 1.0 ± 0.001 at rubric-creation time (not left for the scoring math to silently absorb a typo). A judge scores each criterion on the rubric's configured scale (default 1–5); the raw weighted score for one judge's evaluation of one submission is
+A rubric (`RubricsService`) is a named set of criteria, each with a weight; weights are validated to sum to 1.0 ± 0.001 at rubric-creation time (not left for the scoring math to silently absorb a typo). Weights are also limited to 4 decimal places and a minimum of 0.0001 (the storage precision): a finer weight used to be rounded to 0.0000 on write, leaving a criterion that could never count. Because the ±0.001 sum tolerance lets weights total slightly off 1, the raw score is divided by the actual weight total, so a judge who gives every criterion the maximum always lands exactly on the scale's maximum rather than a hair above it. A judge scores each criterion on the rubric's configured scale (default 1–5); the raw weighted score for one judge's evaluation of one submission is
 
 ```
 raw = Σ (criterion_value_i × criterion_weight_i)
