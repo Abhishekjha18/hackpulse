@@ -1,0 +1,9 @@
+# --max-arg-length: lint-staged auto-detects Windows' 8191-char cmd.exe
+# limit already, but that doesn't leave headroom for the extra quoting
+# Windows adds around paths with brackets (this repo's Next.js dynamic
+# routes, e.g. events/[eventId]/...) — found live, on the first real
+# commit this hook ran against (170+ staged files): "prettier --write:
+# The command line is too long" even with auto-chunking. A firm, lower
+# cap forces smaller chunks with real headroom instead of cutting it
+# exactly at the OS ceiling.
+npx lint-staged --max-arg-length=4000

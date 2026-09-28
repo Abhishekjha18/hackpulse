@@ -87,7 +87,9 @@ export default function TeamPage() {
       api
         .delete(`/teams/${team!.id}/members/${userId}`)
         .then(() => load())
-        .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to remove member"));
+        .catch((err) =>
+          setError(err instanceof ApiError ? err.message : "Failed to remove member"),
+        );
     }
 
     return (
