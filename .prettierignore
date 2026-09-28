@@ -1,0 +1,20 @@
+# Build output
+dist
+.next
+build
+coverage
+
+# Generated / vendored — reformatting these would create noise unrelated to
+# hand-written code, or fight tooling that generates them in its own style.
+pnpm-lock.yaml
+apps/api/drizzle/meta
+*.sql
+docs/openapi.yaml
+
+# The shared fixture data, kept byte-for-byte identical to the published
+# copy — a formatter rewriting it would defeat the point of loading it
+# verbatim.
+fixtures.json
+
+# Dependencies
+node_modules

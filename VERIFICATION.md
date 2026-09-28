@@ -139,7 +139,7 @@ The reference event ("Sample Hack 2026") is loaded automatically at boot from `f
 To see it from the _organizer's_ or a _judge's_ seat — judging progress, the normalization proof, outlier-judge flags — sign in as one of the dedicated accounts `load-fixtures.ts` creates for exactly this purpose (all four share one password):
 
 | Role                                 | Email                                 | Password          |
-| ------------------------------------ | -------------------------------------- | ----------------- |
+| ------------------------------------ | ------------------------------------- | ----------------- |
 | Organizer of the reference event     | `dogfood-organizer@hackpulse.local`   | `dogfood-check-1` |
 | Judge (has submitted one real score) | `dogfood-judge-a@hackpulse.local`     | `dogfood-check-1` |
 | Judge (has submitted one real score) | `dogfood-judge-b@hackpulse.local`     | `dogfood-check-1` |
