@@ -36,6 +36,13 @@
       "when": 1790503320000,
       "tag": "0004_romantic_kree",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790510325000,
+      "tag": "0005_add_profiles",
+      "breakpoints": true
     }
   ]
 }
