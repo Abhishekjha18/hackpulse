@@ -31,10 +31,20 @@
 
   --color-danger: 196 67 46;
   --color-danger-soft: 250 231 225;
+
+  /* The graph-paper grid's line opacity — 50% reads as a faint wash on
+     this near-white paper, but the same alpha against dark mode's
+     near-black paper is a much louder blue (same alpha, wildly
+     different perceived contrast). Themed here rather than in the
+     component so it stays a plain CSS variable flip, same as every
+     other color in this file — no JS theme check needed. */
+  --graph-paper-opacity: 0.5;
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
+
+  --graph-paper-opacity: 0.12;
 
   --color-paper: 18 17 22;
   --color-surface: 27 26 32;
@@ -97,6 +107,18 @@ select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%239C9AA6' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
+/* Found live: none of these ever declared their own background — every
+   text input/select/textarea in the app relied on the page behind it
+   being a flat color, which was true right up until the graph-paper grid
+   and decorative shapes were added as a fixed background layer. After
+   that, every field showed grid lines straight through it. Checkbox/radio
+   inputs are excluded — those should stay native, not get a card-like
+   surface fill. */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea {
+  background-color: rgb(var(--color-surface));
+}
+
 input:focus,
 select:focus,
 textarea:focus {
@@ -117,6 +139,56 @@ button:not(:disabled) {
 @media (prefers-reduced-motion: no-preference) {
   button:not(:disabled):active {
     transform: scale(0.97);
+  }
+}
+
+/* Motion for the decorative rings/dots/squares (DecorativeBackground,
+   the homepage hero shapes). Two motion types only, on purpose — rings
+   and dots drift up and down, squares rotate continuously — applied via
+   each shape's `motion-safe:animate-[...]` class in JSX rather than a
+   class here, since duration is picked per shape (bigger = slower,
+   smaller = faster), and Tailwind's `motion-safe:` variant means anyone
+   with prefers-reduced-motion set just gets the static shapes with no
+   animation classes applied at all, no extra rule needed here for that
+   case. Two spin directions (cw/ccw) alternate across the squares purely
+   for variety, not tied to size.
+   Found live: the first pass (±8px drift, 7-46s cycles) was tuned to be
+   "present if you look for it" and came across as basically motionless —
+   drift-sm exists so the small dots (8-12px) don't drift a distance
+   bigger than themselves while everything still reads as clearly moving
+   at a glance. */
+@keyframes decorative-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-16px);
+  }
+}
+@keyframes decorative-drift-sm {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes decorative-spin-cw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes decorative-spin-ccw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
   }
 }
 
