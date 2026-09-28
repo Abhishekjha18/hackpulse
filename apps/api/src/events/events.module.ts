@@ -5,12 +5,13 @@ import { CustomQuestionsController } from "./custom-questions.controller";
 import { CustomQuestionsService } from "./custom-questions.service";
 import { EventsController } from "./events.controller";
 import { EventsService } from "./events.service";
+import { OrganizersController } from "./organizers.controller";
 import { PrizesController } from "./prizes.controller";
 import { PrizesService } from "./prizes.service";
 
 @Module({
   imports: [EventRoleInvitesModule],
-  controllers: [EventsController, CustomQuestionsController, PrizesController],
+  controllers: [EventsController, CustomQuestionsController, PrizesController, OrganizersController],
   providers: [EventsService, CustomQuestionsService, PrizesService],
 })
 export class EventsModule {}
