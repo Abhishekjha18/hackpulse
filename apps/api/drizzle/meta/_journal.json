@@ -50,6 +50,13 @@
       "when": 1790516540000,
       "tag": "0006_add_banner_image_url",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790523780000,
+      "tag": "0007_add_missing_indexes",
+      "breakpoints": true
     }
   ]
 }
