@@ -33,6 +33,33 @@
   --color-danger-soft: 250 231 225;
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-paper: 18 17 22;
+  --color-surface: 27 26 32;
+  --color-surface-alt: 38 37 44;
+  --color-line: 56 54 63;
+  --color-ink: 241 240 236;
+  --color-muted: 156 154 166;
+
+  --color-accent: 124 111 255;
+  --color-accent-dark: 91 79 224;
+  --color-accent-soft: 30 27 58;
+
+  --color-pulse: 255 122 77;
+  --color-pulse-soft: 58 35 24;
+
+  --color-success: 52 196 134;
+  --color-success-soft: 15 42 30;
+
+  --color-warning: 224 168 61;
+  --color-warning-soft: 58 46 16;
+
+  --color-danger: 240 106 82;
+  --color-danger-soft: 58 23 18;
+}
+
 body {
   @apply bg-paper text-ink;
   font-family:
@@ -61,6 +88,13 @@ select {
   background-position: right 0.65rem center;
   background-size: 1rem;
   padding-right: 2.5rem !important;
+}
+
+/* Same chevron, redrawn in the dark-mode muted tone — a data: URI can't
+   read a CSS variable, so this is a second static SVG rather than one
+   shared image. */
+:root[data-theme="dark"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%239C9AA6' stroke-width='1.6'%3E%3Cpath d='M6 8l4 4 4-4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 input:focus,
@@ -102,5 +136,15 @@ button:not(:disabled) {
   }
   to {
     opacity: 1;
+  }
+}
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }

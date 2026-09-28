@@ -17,6 +17,7 @@ import { JudgingModule } from "./judging/judging.module";
 import { ProfilesModule } from "./profiles/profiles.module";
 import { QueueModule } from "./queue/queue.module";
 import { ResultsModule } from "./results/results.module";
+import { SearchModule } from "./search/search.module";
 import { SubmissionsModule } from "./submissions/submissions.module";
 import { TeamsModule } from "./teams/teams.module";
 import { UsersModule } from "./users/users.module";
@@ -44,6 +45,7 @@ import { WebhooksModule } from "./webhooks/webhooks.module";
     ResultsModule,
     BulkModule,
     ProfilesModule,
+    SearchModule,
   ],
   providers: [
     // Order matters: AuthGuard resolves request.user first, RolesGuard
