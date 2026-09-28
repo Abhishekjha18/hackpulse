@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { CountdownChip, EventBannerOrDefault, StatusBadge } from "../components/ui";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
+import { useTheme } from "../lib/theme-context";
 import { useInView } from "../lib/use-in-view";
 
 interface InstanceStats {
@@ -59,6 +60,7 @@ const HERO_PARALLAX_RATES = [0.16, 0.22, 0.12, 0.18];
 // returning participant want different things from "/".
 export default function HomePage() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [stats, setStats] = useState<InstanceStats | null>(null);
   const [activeEvents, setActiveEvents] = useState<EventListItem[] | null>(null);
 
@@ -102,6 +104,7 @@ export default function HomePage() {
 
   const stats_ = useInView<HTMLElement>();
   const features = useInView<HTMLElement>();
+  const screenshots = useInView<HTMLElement>();
   const happening = useInView<HTMLElement>();
 
   return (
@@ -220,6 +223,34 @@ export default function HomePage() {
             >
               <h3 className="text-h3 font-semibold text-ink">{f.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">{f.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Real product screenshots, not stock illustration */}
+      <section ref={screenshots.ref} className="py-12">
+        <h2 className="text-center text-h2 font-semibold text-ink">
+          Built for organizers, judges, and participants
+        </h2>
+        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+          {[
+            { base: "dashboard", label: "Organizer dashboard" },
+            { base: "gallery", label: "Public gallery" },
+            { base: "scoring", label: "Judge scoring" },
+          ].map((shot, i) => (
+            <div
+              key={shot.base}
+              style={{ transitionDelay: `${i * 90}ms` }}
+              className={`overflow-hidden rounded-xl border border-line bg-surface shadow-sm ${revealClass(screenshots.revealed)}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/screenshots/${shot.base}-${theme}.png`}
+                alt={shot.label}
+                className="w-full border-b border-line"
+              />
+              <p className="p-3 text-center text-sm font-medium text-ink">{shot.label}</p>
             </div>
           ))}
         </div>
