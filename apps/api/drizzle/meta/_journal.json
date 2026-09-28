@@ -57,6 +57,13 @@
       "when": 1790523780000,
       "tag": "0007_add_missing_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790531010000,
+      "tag": "0008_two_mode_lifecycle",
+      "breakpoints": true
     }
   ]
 }
