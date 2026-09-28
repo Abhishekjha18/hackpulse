@@ -1,6 +1,6 @@
 "use client";
 
-import type { Event, Prize, Submission } from "@hackpulse/shared";
+import type { Event, MyEventInvite, Prize, Submission } from "@hackpulse/shared";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -49,21 +49,33 @@ interface WinItem {
   eventName: string;
   prizeNames: string[];
 }
-type NotificationItem = PendingItem | RankItem | WinItem;
+interface InviteItem {
+  kind: "invite";
+  inviteId: string;
+  eventId: string;
+  eventName: string;
+  role: "judge" | "organizer";
+  trackNames: string[];
+  invitedByName: string;
+}
+type NotificationItem = PendingItem | RankItem | WinItem | InviteItem;
 
 // Requested explicitly, then refined after a follow-up correction: only
 // rank/win announcements (a one-time fact about a published result, with
 // nothing further to do about it) stop reappearing once someone has
-// actually seen them. A judging reminder stays visible until actually
-// acted upon -- a reminder that a judge still has pending work isn't
-// "read and done" just because the bell was opened. A judging item
+// actually seen them. Judging reminders and invites both stay visible
+// until actually acted upon -- a reminder that a judge still has pending
+// work isn't "read and done" just because the bell was opened, the same
+// way an invite isn't resolved just by being seen. A judging item
 // disappears on its own once its underlying count reaches 0 (no items
-// left to judge). There's no notifications table -- every item here is
-// recomputed live from other tables each load(), not a stored discrete
-// event -- so "read" state for win/rank is tracked client-side by a
-// stable per-item key (just the eventId, since a result is immutable once
-// published), scoped per signed-in user (multiple accounts often share a
-// browser in this dev environment).
+// left to judge), and an invite once accepted/declined
+// (respondToInvite) -- neither is ever dismissed merely by viewing.
+// There's no notifications table -- every item here is recomputed live
+// from other tables each load(), not a stored discrete event -- so "read"
+// state for win/rank is tracked client-side by a stable per-item key
+// (just the eventId, since a result is immutable once published), scoped
+// per signed-in user (multiple accounts often share a browser in this dev
+// environment).
 function notificationKey(item: NotificationItem): string | null {
   if (item.kind === "win") {
     return `win:${item.eventId}`;
@@ -94,7 +106,7 @@ function saveReadKeys(userId: string, keys: Set<string>) {
 // from every page, instead of each living as a page-specific banner a
 // user only sees by being on the right page.
 export function NotificationsBell() {
-  const { user } = useAuth();
+  const { user, refresh } = useAuth();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -192,7 +204,13 @@ export function NotificationsBell() {
         .then((r) => r.items.filter((e) => e.status === "results_published"))
         .catch(() => [] as Event[]);
 
-      const [pendingResults, publishedMine] = await Promise.all([pendingPromise, minePromise]);
+      const invitesPromise = api.get<MyEventInvite[]>("/users/me/event-invites").catch(() => []);
+
+      const [pendingResults, publishedMine, invites] = await Promise.all([
+        pendingPromise,
+        minePromise,
+        invitesPromise,
+      ]);
 
       // Requested explicitly, on both counts: (1) every participant should
       // hear their rank once results publish, not just whoever came first
@@ -239,6 +257,15 @@ export function NotificationsBell() {
 
       if (!cancelled) {
         setItems([
+          ...invites.map((inv): InviteItem => ({
+            kind: "invite",
+            inviteId: inv.id,
+            eventId: inv.eventId,
+            eventName: inv.eventName,
+            role: inv.role,
+            trackNames: inv.trackNames,
+            invitedByName: inv.invitedByName,
+          })),
           ...pendingResults.filter((r): r is PendingItem => r !== null),
           ...placementResults.map((r) => r.winItem).filter((r): r is WinItem => r !== null),
           ...placementResults.map((r) => r.rankItem).filter((r): r is RankItem => r !== null),
@@ -253,6 +280,33 @@ export function NotificationsBell() {
     // refreshKey is a re-fetch trigger, not part of the query itself.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, refreshKey]);
+
+  // Removes the invite from state immediately rather than waiting for the
+  // next poll; a failed request just gets re-added on the next refresh.
+  async function respondToInvite(
+    inviteId: string,
+    eventId: string,
+    role: "judge" | "organizer",
+    action: "accept" | "decline",
+  ) {
+    setItems((prev) => prev.filter((i) => !(i.kind === "invite" && i.inviteId === inviteId)));
+    const segment = role === "judge" ? "judge-invites" : "organizer-invites";
+    try {
+      await api.post(`/events/${eventId}/${segment}/${inviteId}/${action}`);
+      // Found live: accepting a judge/organizer invite granted the role
+      // server-side immediately, but the client's cached eventRoles (from
+      // useAuth()) didn't update until some unrelated later refresh — so
+      // e.g. the team-registration page's "you organize or judge this
+      // event" check kept passing (using the stale, role-less snapshot)
+      // right after acceptance, until a full reload. Only needed for
+      // "accept" (a decline changes nothing about this user's roles).
+      if (action === "accept") {
+        await refresh();
+      }
+    } catch {
+      setRefreshKey((k) => k + 1);
+    }
+  }
 
   if (!user) {
     return null;
@@ -311,6 +365,47 @@ export function NotificationsBell() {
               <p className="p-3 text-xs leading-normal text-muted">Nothing new.</p>
             ) : (
               visibleItems.map((item) => {
+                if (item.kind === "invite") {
+                  return (
+                    <div
+                      key={`invite-${item.inviteId}`}
+                      className="rounded-md p-2.5 text-sm leading-relaxed"
+                    >
+                      <p>
+                        <strong>{item.invitedByName}</strong>{" "}
+                        {item.role === "judge"
+                          ? "invited you to judge"
+                          : "invited you to co-organize"}{" "}
+                        <strong>{item.eventName}</strong>
+                        {item.trackNames.length > 0 && <> ({item.trackNames.join(", ")})</>}
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          data-testid={`invite-accept-${item.inviteId}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            respondToInvite(item.inviteId, item.eventId, item.role, "accept");
+                          }}
+                          className="rounded-md bg-accent px-3 py-1 text-xs font-medium text-white hover:bg-accent-dark"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          type="button"
+                          data-testid={`invite-decline-${item.inviteId}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            respondToInvite(item.inviteId, item.eventId, item.role, "decline");
+                          }}
+                          className="rounded-md border border-line bg-paper px-3 py-1 text-xs font-medium hover:bg-surface-alt"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
                 if (item.kind === "judging") {
                   return (
                     <Link
