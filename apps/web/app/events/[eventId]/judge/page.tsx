@@ -1,9 +1,11 @@
 "use client";
 
-import type { Event, Rubric, RubricCriterion, Submission } from "@hackpulse/shared";
+import type { Event, Rubric, RubricCriterion, Submission, Track } from "@hackpulse/shared";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { PairwiseJudging } from "../../../../components/pairwise-judging";
+import { LoadingState, TagPill, ThumbnailOrInitials } from "../../../../components/ui";
 import { api, ApiError } from "../../../../lib/api";
 
 interface QueueEntry {
@@ -16,6 +18,7 @@ type RubricWithCriteria = Rubric & { criteria: RubricCriterion[] };
 export default function JudgePage() {
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<Event | null>(null);
+  const [tracks, setTracks] = useState<Track[]>([]);
   const [queue, setQueue] = useState<QueueEntry[] | null>(null);
   const [rubrics, setRubrics] = useState<RubricWithCriteria[]>([]);
   const [active, setActive] = useState<QueueEntry | null>(null);
@@ -37,6 +40,10 @@ export default function JudgePage() {
       .get<Event>(`/events/${eventId}`)
       .then(setEvent)
       .catch((e) => setError(e instanceof ApiError ? e.message : "Failed to load event"));
+    api
+      .get<Track[]>(`/events/${eventId}/tracks`)
+      .then(setTracks)
+      .catch(() => {});
     loadQueue();
     api
       .get<RubricWithCriteria[]>(`/events/${eventId}/judging/rubrics`)
@@ -93,7 +100,13 @@ export default function JudgePage() {
     return <p className="text-sm text-danger">{error}</p>;
   }
   if (!queue || !event) {
-    return <p className="text-sm text-muted">Loading…</p>;
+    return <LoadingState />;
+  }
+
+  // scoringMode is event-wide, not per-track: every track uses either
+  // rubric scoring or pairwise comparison, never a mix.
+  if (event.scoringMode === "pairwise") {
+    return <PairwiseJudging eventId={eventId} tracks={tracks} />;
   }
 
   if (active) {
@@ -103,6 +116,15 @@ export default function JudgePage() {
         <button onClick={() => setActive(null)} className="text-sm text-accent hover:underline">
           ← Back to queue
         </button>
+        {/* Previously showed only name + description, with no repo/live/demo
+            links, tags, or images: a judge had no real way to evaluate the
+            project they were scoring. */}
+        <div className="mt-3 h-40 overflow-hidden rounded-xl border border-line">
+          <ThumbnailOrInitials
+            thumbnailUrl={active.submission.thumbnailUrl}
+            name={active.submission.name}
+          />
+        </div>
         <h1 className="mt-4 text-h1 font-semibold text-ink">{active.submission.name}</h1>
         {active.submission.tagline && (
           <p className="mt-1 text-sm leading-relaxed text-muted">{active.submission.tagline}</p>
@@ -114,9 +136,7 @@ export default function JudgePage() {
         {active.submission.techTags.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
             {active.submission.techTags.map((t) => (
-              <span key={t} className="rounded-full bg-surface-alt px-2 py-0.5 text-xs text-muted">
-                {t}
-              </span>
+              <TagPill key={t}>{t}</TagPill>
             ))}
           </div>
         )}
@@ -153,6 +173,20 @@ export default function JudgePage() {
             </a>
           )}
         </div>
+
+        {active.submission.galleryImageUrls.length > 0 && (
+          <div className="mt-3 flex gap-2 overflow-x-auto">
+            {active.submission.galleryImageUrls.map((url) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={url}
+                src={url}
+                alt=""
+                className="h-24 w-32 shrink-0 rounded-md border border-line object-cover"
+              />
+            ))}
+          </div>
+        )}
 
         {!rubric ? (
           <p className="mt-6 text-sm leading-relaxed text-muted">
