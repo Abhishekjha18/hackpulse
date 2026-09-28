@@ -239,7 +239,7 @@ function OverviewTab({
         </button>
       </form>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+      <div className="mt-8 grid gap-x-4 gap-y-5 sm:grid-cols-2">
         <EventSettingSelect
           label="Scoring mode"
           testId="event-scoring-select"
