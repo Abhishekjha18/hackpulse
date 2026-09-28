@@ -22,6 +22,7 @@ import {
 } from "../db/schema";
 import { DB } from "../db/tokens";
 import { NormalizationService } from "../judging/normalization.service";
+import { PairwiseService } from "../judging/pairwise/pairwise.service";
 import { VotingService } from "../voting/voting.service";
 import { WebhooksService } from "../webhooks/webhooks.service";
 
@@ -30,6 +31,7 @@ export class ResultsService {
   constructor(
     @Inject(DB) private readonly db: Database,
     private readonly normalization: NormalizationService,
+    private readonly pairwise: PairwiseService,
     private readonly voting: VotingService,
     private readonly audit: AuditService,
     private readonly webhooks: WebhooksService,
@@ -138,8 +140,19 @@ export class ResultsService {
       }),
     );
 
+    // FR-PAIR: a track using pairwise mode has no rubric at all, so its
+    // standings live here instead, keyed by track rather than rubric.
+    const eventTracks = await this.db.select().from(tracks).where(eq(tracks.eventId, eventId));
+    const pairwiseResults = await Promise.all(
+      eventTracks.map(async (t) => ({
+        trackId: t.id,
+        trackName: t.name,
+        rankings: withNames(await this.pairwise.getRankings(eventId, t.id)),
+      })),
+    );
+
     const voteTally = withNames(await this.voting.getTally(eventId, true));
-    return { rubricResults, voteTally };
+    return { rubricResults, pairwiseResults, voteTally };
   }
 
   // FR-RESULT-01/02: hidden from everyone but organizers until published.
