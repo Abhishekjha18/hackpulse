@@ -1,4 +1,4 @@
-import type { CurrentUser } from "@hackpulse/shared";
+import { AUDIT_ACTION, type CurrentUser } from "@hackpulse/shared";
 import {
   CanActivate,
   ExecutionContext,
@@ -66,7 +66,7 @@ export class TrackScopeGuard implements CanActivate {
       await this.audit.log({
         eventId,
         actorUserId: user.id,
-        action: "track_scope.access_denied",
+        action: AUDIT_ACTION.TRACK_SCOPE_ACCESS_DENIED,
         resourceType: "track",
         resourceId: trackId,
       });

@@ -1,4 +1,4 @@
-import type { CurrentUser } from "@hackpulse/shared";
+import { AUDIT_ACTION, type CurrentUser } from "@hackpulse/shared";
 import {
   CanActivate,
   ExecutionContext,
@@ -69,7 +69,7 @@ export class AssignmentOwnershipGuard implements CanActivate {
       await this.audit.log({
         eventId: assignment.eventId,
         actorUserId: user.id,
-        action: "score.access_denied",
+        action: AUDIT_ACTION.SCORE_ACCESS_DENIED,
         resourceType: "judge_assignment",
         resourceId: assignmentId,
         metadata: { submissionId: assignment.submissionId },

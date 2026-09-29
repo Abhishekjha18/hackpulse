@@ -1,4 +1,5 @@
 import {
+  AUDIT_ACTION,
   type Profile,
   PROFILE_FIELDS,
   type PublicProfile,
@@ -138,7 +139,7 @@ export class ProfilesService {
     // isn't a per-event role at all.
     await this.audit.log({
       actorUserId,
-      action: "user.organizer_status_changed",
+      action: AUDIT_ACTION.USER_ORGANIZER_STATUS_CHANGED,
       resourceType: "user",
       resourceId: targetUserId,
       metadata: { canOrganizeEvents },

@@ -1,4 +1,4 @@
-import { ERROR_CODE } from "@hackpulse/shared";
+import { AUDIT_ACTION, ERROR_CODE } from "@hackpulse/shared";
 import { ConflictException, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 
@@ -33,7 +33,7 @@ export async function assertJudgingWindowOpen(
       await audit.log({
         eventId,
         actorUserId,
-        action: "score.window_rejected",
+        action: AUDIT_ACTION.SCORE_WINDOW_REJECTED,
         resourceType: "event",
         resourceId: eventId,
         metadata: { attemptedAction, reason: "not_open" },
@@ -49,7 +49,7 @@ export async function assertJudgingWindowOpen(
     await audit.log({
       eventId,
       actorUserId,
-      action: "score.window_rejected",
+      action: AUDIT_ACTION.SCORE_WINDOW_REJECTED,
       resourceType: "event",
       resourceId: eventId,
       metadata: { attemptedAction, reason: now < event.judgingOpenAt ? "not_open" : "closed" },

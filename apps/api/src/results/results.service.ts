@@ -1,4 +1,4 @@
-import { type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
+import { AUDIT_ACTION, type CurrentUser, ERROR_CODE, WEBHOOK_EVENT } from "@hackpulse/shared";
 import {
   ConflictException,
   ForbiddenException,
@@ -290,13 +290,13 @@ export class ResultsService {
     await this.audit.log({
       eventId,
       actorUserId: currentUser.id,
-      action: "results.publish",
+      action: AUDIT_ACTION.RESULTS_PUBLISH,
       resourceType: "event",
       resourceId: eventId,
       metadata: {},
     });
 
-    await this.webhooks.trigger(eventId, "results.published", {
+    await this.webhooks.trigger(eventId, WEBHOOK_EVENT.RESULTS_PUBLISHED, {
       eventId,
       resultsPublishAt: updated.resultsPublishAt,
     });

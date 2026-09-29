@@ -1,4 +1,4 @@
-import { type CastVoteInput, type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
+import { AUDIT_ACTION, type CastVoteInput, type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
 import {
   BadRequestException,
   ConflictException,
@@ -295,7 +295,7 @@ export class VotingService {
     await this.audit.log({
       eventId,
       actorUserId: voter.isAuthenticated ? voter.voterId.slice("user:".length) : null,
-      action: "vote.cast",
+      action: AUDIT_ACTION.VOTE_CAST,
       resourceType: "submission",
       resourceId: input.submissionId,
       metadata: { votesCast, cost, voterId: voter.voterId },

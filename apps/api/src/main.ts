@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import "dotenv/config";
 
+import { AUDIT_ACTION } from "@hackpulse/shared";
 import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
 import { fromNodeHeaders } from "better-auth/node";
@@ -9,7 +10,6 @@ import { AppModule } from "./app.module";
 import { AuditService } from "./audit/audit.service";
 import { auth } from "./auth/auth.config";
 import { setupOpenApi } from "./openapi/setup";
-
 /**
  * Only the fields toWebRequest actually reads, to avoid importing
  * FastifyRequest's full generic type: it duplicate-installs across
@@ -74,7 +74,7 @@ async function logSignInOrSignUp(
     if (actorUserId) {
       await auditService.log({
         actorUserId,
-        action: isSignIn ? "auth.sign_in" : "auth.sign_up",
+        action: isSignIn ? AUDIT_ACTION.AUTH_SIGN_IN : AUDIT_ACTION.AUTH_SIGN_UP,
         resourceType: "user",
         resourceId: actorUserId,
       });
@@ -127,7 +127,7 @@ async function bootstrap() {
             await auditService
               .log({
                 actorUserId,
-                action: "auth.sign_out",
+                action: AUDIT_ACTION.AUTH_SIGN_OUT,
                 resourceType: "user",
                 resourceId: actorUserId,
               })

@@ -1,4 +1,5 @@
 import {
+  AUDIT_ACTION,
   ERROR_CODE,
   type EventRoleListEntry,
   type InviteJudgeInput,
@@ -88,7 +89,7 @@ export class JudgesService {
       await this.audit.log({
         eventId,
         actorUserId: organizerUserId,
-        action: "event_role.granted",
+        action: AUDIT_ACTION.EVENT_ROLE_GRANTED,
         resourceType: "event_role",
         resourceId: role.id,
         metadata: { role: "judge", self: true },
@@ -132,7 +133,7 @@ export class JudgesService {
     await this.audit.log({
       eventId,
       actorUserId: removedByUserId,
-      action: "event_role.revoked",
+      action: AUDIT_ACTION.EVENT_ROLE_REVOKED,
       resourceType: "event_role",
       resourceId: eventRoleId,
       metadata: { role: "judge", targetUserId: role.userId },

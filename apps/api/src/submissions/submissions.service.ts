@@ -1,11 +1,13 @@
 import { createHash } from "node:crypto";
 
 import {
+  AUDIT_ACTION,
   type CreateSubmissionInput,
   type CurrentUser,
   ERROR_CODE,
   type SetCustomAnswersInput,
   type UpdateSubmissionInput,
+  WEBHOOK_EVENT,
 } from "@hackpulse/shared";
 import {
   BadRequestException,
@@ -184,7 +186,7 @@ export class SubmissionsService {
       await this.audit.log({
         eventId: event.id,
         actorUserId,
-        action: "submission.deadline_rejected",
+        action: AUDIT_ACTION.SUBMISSION_DEADLINE_REJECTED,
         resourceType: resource.resourceType,
         resourceId: resource.resourceId,
         metadata: { attemptedAction, reason: "not_open" },
@@ -208,7 +210,7 @@ export class SubmissionsService {
     await this.audit.log({
       eventId: event.id,
       actorUserId,
-      action: "submission.deadline_rejected",
+      action: AUDIT_ACTION.SUBMISSION_DEADLINE_REJECTED,
       resourceType: resource.resourceType,
       resourceId: resource.resourceId,
       metadata: { attemptedAction, reason: now < event.submissionOpenAt ? "not_open" : "closed" },
@@ -422,7 +424,7 @@ export class SubmissionsService {
       .where(eq(submissions.id, submissionId))
       .returning();
 
-    await this.webhooks.trigger(event.id, "submission.received", {
+    await this.webhooks.trigger(event.id, WEBHOOK_EVENT.SUBMISSION_RECEIVED, {
       submissionId: updated.id,
       name: updated.name,
       trackId: updated.trackId,

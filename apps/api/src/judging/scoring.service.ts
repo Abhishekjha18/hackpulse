@@ -1,4 +1,10 @@
-import { type CurrentUser, ERROR_CODE, type SaveScoreInput } from "@hackpulse/shared";
+import {
+  AUDIT_ACTION,
+  type CurrentUser,
+  ERROR_CODE,
+  type SaveScoreInput,
+  WEBHOOK_EVENT,
+} from "@hackpulse/shared";
 import {
   BadRequestException,
   ConflictException,
@@ -205,7 +211,7 @@ export class ScoringService {
       await this.audit.log({
         eventId: assignment.eventId,
         actorUserId: currentUser.id,
-        action: "score.edit",
+        action: AUDIT_ACTION.SCORE_EDIT,
         resourceType: "score",
         resourceId: result.id,
         // Old and new raw score are recorded so an organizer reading the
@@ -307,7 +313,7 @@ export class ScoringService {
     await this.audit.log({
       eventId: assignment.eventId,
       actorUserId: currentUser.id,
-      action: "score.submit",
+      action: AUDIT_ACTION.SCORE_SUBMIT,
       resourceType: "score",
       resourceId: score.id,
       metadata: { assignmentId, submissionId: assignment.submissionId },
@@ -336,7 +342,7 @@ export class ScoringService {
       return;
     }
 
-    await this.webhooks.trigger(assignment.eventId, "judging.completed", {
+    await this.webhooks.trigger(assignment.eventId, WEBHOOK_EVENT.JUDGING_COMPLETED, {
       submissionId: assignment.submissionId,
       judgeCount: siblings.length,
     });

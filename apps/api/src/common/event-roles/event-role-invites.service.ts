@@ -1,4 +1,5 @@
 import {
+  AUDIT_ACTION,
   ERROR_CODE,
   type EventRole,
   type EventRoleListEntry,
@@ -212,7 +213,7 @@ export class EventRoleInvitesService {
         await this.audit.log({
           eventId,
           actorUserId: currentUserId,
-          action: "event_role.granted",
+          action: AUDIT_ACTION.EVENT_ROLE_GRANTED,
           resourceType: "event_role",
           resourceId: result.eventRoleId,
           metadata: { role: invite.role },

@@ -3,6 +3,8 @@
 // Turning that into something a human can actually read without cross-
 // referencing ids by hand is a read-side concern, kept here as pure
 // functions so it's testable without a database.
+import { AUDIT_ACTION } from "@hackpulse/shared";
+
 export interface AuditLogRow {
   id: string;
   eventId: string | null;
@@ -32,24 +34,24 @@ export interface NameLookups {
 // string), so a new call site never breaks the UI, it just reads as raw
 // until a label is added here.
 export const ACTION_LABELS: Record<string, string> = {
-  "auth.sign_in": "Signed in",
-  "auth.sign_up": "Signed up",
-  "auth.sign_out": "Signed out",
-  "event_role.granted": "Joined a role",
-  "event_role.revoked": "Removed from a role",
-  "user.organizer_status_changed": "Changed organizer access",
-  "score.window_rejected": "Blocked — judging window closed",
-  "score.edit": "Edited a submitted score",
-  "score.submit": "Submitted a score",
-  "score.access_denied": "Blocked — tried to view another judge's score",
-  "results.publish": "Published results",
-  "export.archive": "Exported the full event archive",
-  "export.csv": "Exported data",
-  "import.csv": "Imported data",
-  "submission.deadline_rejected": "Blocked — submission deadline",
-  "track_scope.access_denied": "Blocked — tried to judge outside assigned track",
-  "audit_log.access_denied": "Blocked — tried to view the audit log",
-  "vote.cast": "Cast a vote",
+  [AUDIT_ACTION.AUTH_SIGN_IN]: "Signed in",
+  [AUDIT_ACTION.AUTH_SIGN_UP]: "Signed up",
+  [AUDIT_ACTION.AUTH_SIGN_OUT]: "Signed out",
+  [AUDIT_ACTION.EVENT_ROLE_GRANTED]: "Joined a role",
+  [AUDIT_ACTION.EVENT_ROLE_REVOKED]: "Removed from a role",
+  [AUDIT_ACTION.USER_ORGANIZER_STATUS_CHANGED]: "Changed organizer access",
+  [AUDIT_ACTION.SCORE_WINDOW_REJECTED]: "Blocked — judging window closed",
+  [AUDIT_ACTION.SCORE_EDIT]: "Edited a submitted score",
+  [AUDIT_ACTION.SCORE_SUBMIT]: "Submitted a score",
+  [AUDIT_ACTION.SCORE_ACCESS_DENIED]: "Blocked — tried to view another judge's score",
+  [AUDIT_ACTION.RESULTS_PUBLISH]: "Published results",
+  [AUDIT_ACTION.EXPORT_ARCHIVE]: "Exported the full event archive",
+  [AUDIT_ACTION.EXPORT_CSV]: "Exported data",
+  [AUDIT_ACTION.IMPORT_CSV]: "Imported data",
+  [AUDIT_ACTION.SUBMISSION_DEADLINE_REJECTED]: "Blocked — submission deadline",
+  [AUDIT_ACTION.TRACK_SCOPE_ACCESS_DENIED]: "Blocked — tried to judge outside assigned track",
+  [AUDIT_ACTION.AUDIT_LOG_ACCESS_DENIED]: "Blocked — tried to view the audit log",
+  [AUDIT_ACTION.VOTE_CAST]: "Cast a vote",
 };
 
 function meta(row: AuditLogRow): Record<string, unknown> {

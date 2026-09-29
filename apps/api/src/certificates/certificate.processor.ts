@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { WEBHOOK_EVENT } from "@hackpulse/shared";
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Inject } from "@nestjs/common";
 import type { Job } from "bullmq";
@@ -12,7 +13,6 @@ import { DB } from "../db/tokens";
 import { WebhooksService } from "../webhooks/webhooks.service";
 import { renderCertificatePdf } from "./certificate-renderer";
 import { CERTIFICATES_DIR, CertificatesService } from "./certificates.service";
-
 interface RenderJobData {
   certificateId: string;
 }
@@ -74,7 +74,7 @@ export class CertificateProcessor extends WorkerHost {
 
     if (cert.type !== "judge") {
       // judge-type already fired certificate.issued from issueJudgeRecord
-      await this.webhooks.trigger(cert.eventId, "certificate.issued", {
+      await this.webhooks.trigger(cert.eventId, WEBHOOK_EVENT.CERTIFICATE_ISSUED, {
         certificateId: cert.id,
         type: cert.type,
         recipientUserId: cert.recipientUserId,

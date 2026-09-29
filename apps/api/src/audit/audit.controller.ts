@@ -1,4 +1,4 @@
-import type { CurrentUser as CurrentUserType } from "@hackpulse/shared";
+import { AUDIT_ACTION, type CurrentUser as CurrentUserType } from "@hackpulse/shared";
 import {
   Controller,
   ForbiddenException,
@@ -69,7 +69,7 @@ export class AuditController {
       await this.audit.log({
         eventId,
         actorUserId: user.id,
-        action: "audit_log.access_denied",
+        action: AUDIT_ACTION.AUDIT_LOG_ACCESS_DENIED,
         resourceType: "event",
         resourceId: eventId,
       });
@@ -118,7 +118,7 @@ export class AuditGlobalController {
       await this.audit.log({
         eventId: null,
         actorUserId: user.id,
-        action: "audit_log.access_denied",
+        action: AUDIT_ACTION.AUDIT_LOG_ACCESS_DENIED,
         resourceType: "instance",
         resourceId: "GLOBAL",
       });
@@ -140,7 +140,7 @@ export class AuditGlobalController {
       await this.audit.log({
         eventId: null,
         actorUserId: user.id,
-        action: "audit_log.access_denied",
+        action: AUDIT_ACTION.AUDIT_LOG_ACCESS_DENIED,
         resourceType: "instance",
         resourceId: "GLOBAL",
       });

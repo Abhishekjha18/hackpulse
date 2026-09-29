@@ -1,4 +1,4 @@
-import { type CurrentUser as CurrentUserType, ERROR_CODE } from "@hackpulse/shared";
+import { AUDIT_ACTION, type CurrentUser as CurrentUserType, ERROR_CODE } from "@hackpulse/shared";
 import { BadRequestException, Body, Controller, Get, Param, Post, Res } from "@nestjs/common";
 import type { FastifyReply } from "fastify";
 
@@ -74,7 +74,7 @@ export class BulkExportController {
     await this.audit.log({
       eventId,
       actorUserId: user.id,
-      action: "export.archive",
+      action: AUDIT_ACTION.EXPORT_ARCHIVE,
       resourceType: "event",
       resourceId: eventId,
     });
@@ -114,7 +114,7 @@ export class BulkExportController {
     await this.audit.log({
       eventId,
       actorUserId: user.id,
-      action: "export.csv",
+      action: AUDIT_ACTION.EXPORT_CSV,
       resourceType: "event",
       resourceId: eventId,
       metadata: { resource, format },
@@ -172,7 +172,7 @@ export class BulkExportController {
     await this.audit.log({
       eventId,
       actorUserId: user.id,
-      action: "import.csv",
+      action: AUDIT_ACTION.IMPORT_CSV,
       resourceType: "event",
       resourceId: eventId,
       metadata: {

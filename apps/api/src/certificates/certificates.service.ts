@@ -1,4 +1,4 @@
-import { type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
+import { type CurrentUser, ERROR_CODE, WEBHOOK_EVENT } from "@hackpulse/shared";
 import { InjectQueue } from "@nestjs/bullmq";
 import { ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Queue } from "bullmq";
@@ -86,7 +86,7 @@ export class CertificatesService {
       .values({ eventId, judgeUserId, payload, signature, publicKeyId })
       .returning();
 
-    await this.webhooks.trigger(eventId, "certificate.issued", {
+    await this.webhooks.trigger(eventId, WEBHOOK_EVENT.CERTIFICATE_ISSUED, {
       recordId: record.id,
       judgeUserId,
       type: "judge_participation_record",
