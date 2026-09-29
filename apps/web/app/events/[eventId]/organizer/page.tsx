@@ -1,13 +1,13 @@
 "use client";
 
 import type { Event, EventRoleListEntry, Prize, Submission, Track } from "@hackpulse/shared";
+import { EVENT_ROLE, EVENT_STATUS, SCORING_MODE, VOTING_MODE } from "@hackpulse/shared/constants";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { Avatar, LoadingState, StatusBadge, useConfirm } from "../../../../components/ui";
 import { api, ApiError } from "../../../../lib/api";
 import { useAuth } from "../../../../lib/auth-context";
-
 // The four statuses a manual-mode organizer moves between directly via the
 // status dropdown, in order. results_published (Publish results button
 // only) and archived (its own precondition: only once results_published)
@@ -493,7 +493,7 @@ export default function OrganizerPage() {
   // doesn't satisfy this, matching is-event-organizer.ts on the backend,
   // which every one of this page's API calls is actually gated by.
   const isOrganizer = !!user?.eventRoles.some(
-    (r) => r.eventId === eventId && r.role === "organizer",
+    (r) => r.eventId === eventId && r.role === EVENT_ROLE.ORGANIZER,
   );
   if (authLoading) {
     return <LoadingState />;
@@ -587,12 +587,15 @@ export default function OrganizerPage() {
                       // in either mode.
                       <div className="mt-1">
                         <StatusBadge status={event.displayStatus} />
-                        {event.status === "results_published" ? (
+                        {event.status === EVENT_STATUS.RESULTS_PUBLISHED ? (
                           <button
                             data-testid="event-archive"
                             onClick={() =>
                               run(
-                                () => api.patch(`/events/${eventId}`, { status: "archived" }),
+                                () =>
+                                  api.patch(`/events/${eventId}`, {
+                                    status: EVENT_STATUS.ARCHIVED,
+                                  }),
                                 "Event archived.",
                               )
                             }
@@ -627,12 +630,12 @@ export default function OrganizerPage() {
                         }
                         className="mt-1 w-full rounded-md border border-line px-3 py-2 text-sm"
                       >
-                        {event.status === "results_published" ? (
+                        {event.status === EVENT_STATUS.RESULTS_PUBLISHED ? (
                           <>
                             <option value="results_published">results published</option>
                             <option value="archived">archived</option>
                           </>
-                        ) : event.status === "archived" ? (
+                        ) : event.status === EVENT_STATUS.ARCHIVED ? (
                           <option value="archived">archived</option>
                         ) : (
                           REGULAR_MANUAL_STATUSES.slice(
@@ -797,7 +800,7 @@ export default function OrganizerPage() {
 
           <section>
             <h2 className="text-h2 font-semibold text-ink">Judging progress</h2>
-            {event?.scoringMode === "pairwise" ? (
+            {event?.scoringMode === SCORING_MODE.PAIRWISE ? (
               // Reported live ("nothing is shown on judging progress...
               // either"): this used to just fall through to the rubric
               // table below, which reads judgeAssignments -- a table
@@ -928,7 +931,7 @@ export default function OrganizerPage() {
 
           <section>
             <h2 className="text-h2 font-semibold text-ink">Per-submission coverage</h2>
-            {event?.scoringMode === "pairwise" ? (
+            {event?.scoringMode === SCORING_MODE.PAIRWISE ? (
               // Requested explicitly, once it was clear per-submission
               // coverage doesn't translate cleanly to pairwise mode: a
               // submission's "coverage" there isn't a single number the
@@ -1973,7 +1976,7 @@ export default function OrganizerPage() {
             </p>
           </section>
 
-          {event && event.votingMode !== "disabled" && (
+          {event && event.votingMode !== VOTING_MODE.DISABLED && (
             <section>
               <h2 className="text-h2 font-semibold text-ink">Vote tally</h2>
               <p className="mt-1 text-xs leading-relaxed text-muted">

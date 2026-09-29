@@ -1,13 +1,13 @@
 "use client";
 
 import type { Event, Submission } from "@hackpulse/shared";
+import { VOTING_ACCESS, VOTING_MODE } from "@hackpulse/shared/constants";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { LoadingState } from "../../../../components/ui";
 import { api, ApiError } from "../../../../lib/api";
 import { useAuth } from "../../../../lib/auth-context";
-
 function getVoterToken(): string {
   const key = "hackpulse_voter_token";
   let token = window.localStorage.getItem(key);
@@ -28,7 +28,7 @@ export default function VotePage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  const emailGated = !user && event?.votingAccess === "email_gated";
+  const emailGated = !user && event?.votingAccess === VOTING_ACCESS.EMAIL_GATED;
 
   function headers(): Record<string, string> {
     if (user) {
@@ -131,7 +131,7 @@ export default function VotePage() {
               <div className="text-xs leading-normal text-muted">{s.tagline}</div>
             </div>
             <div className="flex items-center gap-2">
-              {event?.votingMode === "quadratic" && (
+              {event?.votingMode === VOTING_MODE.QUADRATIC && (
                 <input
                   type="number"
                   min={1}

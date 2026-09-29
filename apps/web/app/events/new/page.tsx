@@ -1,12 +1,12 @@
 "use client";
 
 import type { Event } from "@hackpulse/shared";
+import { GALLERY_VISIBILITY } from "@hackpulse/shared/constants";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { api, ApiError } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
-
 // datetime-local inputs both read and write local time with no timezone
 // info, so defaults/conversion have to go through local getters/setters
 // rather than the UTC-based isoInDays() this replaced — using UTC here
@@ -85,7 +85,7 @@ export default function NewEventPage() {
               judgingCloseAt: new Date(judgingCloseAt).toISOString(),
             }
           : {}),
-        galleryVisibility: "open",
+        galleryVisibility: GALLERY_VISIBILITY.OPEN,
       });
       const coOrganizerList = coOrganizerEmails
         .split(/[\n,]/)

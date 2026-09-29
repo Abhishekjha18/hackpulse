@@ -1,6 +1,7 @@
 "use client";
 
 import type { Event, Prize, Submission, Track } from "@hackpulse/shared";
+import { EVENT_ROLE, EVENT_STATUS, VOTING_MODE } from "@hackpulse/shared/constants";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -21,7 +22,6 @@ import {
   type Placement,
   type ResultsResponse,
 } from "../../../lib/results";
-
 interface VoteTallyRow {
   submissionId: string;
   totalVotes: number;
@@ -79,7 +79,7 @@ export default function EventPage() {
         // Vote tallies stay hidden from the public until results are
         // published (FR-RESULT-02): only ask once we know that's true,
         // rather than relying on the API's 403 to hide the UI reactively.
-        if (e.status === "results_published") {
+        if (e.status === EVENT_STATUS.RESULTS_PUBLISHED) {
           api
             .get<VoteTallyRow[]>(`/events/${eventId}/votes/tally`)
             .then((rows) =>
@@ -125,7 +125,7 @@ export default function EventPage() {
   // after the event fetch, so folding this into that effect would silently
   // skip it whenever user was still null on the first run.
   useEffect(() => {
-    if (!user || !event || event.status !== "results_published") {
+    if (!user || !event || event.status !== EVENT_STATUS.RESULTS_PUBLISHED) {
       setPlacements([]);
       setWonPrizes([]);
       return;
@@ -157,8 +157,8 @@ export default function EventPage() {
   // dashboard link for events they actually organize, same as anyone else.
   // See apps/api/src/common/auth/is-event-organizer.ts.
   const myEventRoles = user?.eventRoles.filter((r) => r.eventId === eventId) ?? [];
-  const isOrganizer = myEventRoles.some((r) => r.role === "organizer");
-  const isJudge = myEventRoles.some((r) => r.role === "judge");
+  const isOrganizer = myEventRoles.some((r) => r.role === EVENT_ROLE.ORGANIZER);
+  const isJudge = myEventRoles.some((r) => r.role === EVENT_ROLE.JUDGE);
 
   if (error) {
     return <p className="text-sm text-danger">{error}</p>;
@@ -211,7 +211,7 @@ export default function EventPage() {
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">{event.description}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {event.votingMode !== "disabled" && (
+          {event.votingMode !== VOTING_MODE.DISABLED && (
             <Link
               href={`/events/${eventId}/vote`}
               className="rounded-md border border-line bg-paper px-3 py-1.5 text-sm font-medium hover:bg-surface-alt"

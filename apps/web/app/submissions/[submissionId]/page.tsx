@@ -1,13 +1,13 @@
 "use client";
 
 import type { Comment, Submission } from "@hackpulse/shared";
+import { EVENT_ROLE } from "@hackpulse/shared/constants";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Avatar, LoadingState, TagPill, ThumbnailOrInitials } from "../../../components/ui";
 import { api, ApiError } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
-
 export default function SubmissionDetailPage() {
   const { submissionId } = useParams<{ submissionId: string }>();
   const { user } = useAuth();
@@ -121,7 +121,8 @@ export default function SubmissionDetailPage() {
           // gets a clean 403 if they try; nothing unsafe about that.
           const canRemove =
             !!user &&
-            (c.authorUserId === user.id || user.eventRoles.some((r) => r.role === "organizer"));
+            (c.authorUserId === user.id ||
+              user.eventRoles.some((r) => r.role === EVENT_ROLE.ORGANIZER));
           return (
             <div
               key={c.id}

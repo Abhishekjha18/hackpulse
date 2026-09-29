@@ -1,6 +1,7 @@
 "use client";
 
 import type { Team, TeamMember } from "@hackpulse/shared";
+import { EVENT_ROLE } from "@hackpulse/shared/constants";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -8,7 +9,6 @@ import { useEffect, useState } from "react";
 import { Avatar, LoadingState, useConfirm } from "../../../../components/ui";
 import { api, ApiError } from "../../../../lib/api";
 import { useAuth } from "../../../../lib/auth-context";
-
 type TeamWithMembers = Team & { members: TeamMember[] };
 
 export default function TeamPage() {
@@ -69,7 +69,8 @@ export default function TeamPage() {
   // the person *why* before they tried. Checked against the same
   // eventRoles the backend authorizes against, not a separate query.
   const isOrganizerOrJudge = user?.eventRoles.some(
-    (r) => r.eventId === eventId && (r.role === "organizer" || r.role === "judge"),
+    (r) =>
+      r.eventId === eventId && (r.role === EVENT_ROLE.ORGANIZER || r.role === EVENT_ROLE.JUDGE),
   );
   if (!team && isOrganizerOrJudge) {
     return (

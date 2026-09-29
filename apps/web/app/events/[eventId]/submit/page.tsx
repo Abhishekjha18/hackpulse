@@ -1,11 +1,11 @@
 "use client";
 
 import type { Submission, Track } from "@hackpulse/shared";
+import { SCORE_STATUS } from "@hackpulse/shared/constants";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { api, ApiError } from "../../../../lib/api";
-
 export default function SubmitPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -103,7 +103,7 @@ export default function SubmitPage() {
     }
   }
 
-  const submitted = existing?.status === "submitted";
+  const submitted = existing?.status === SCORE_STATUS.SUBMITTED;
 
   return (
     <div className="max-w-xl">

@@ -1,13 +1,13 @@
 "use client";
 
 import type { Event, Rubric, RubricCriterion, Submission, Track } from "@hackpulse/shared";
+import { JUDGE_ASSIGNMENT_STATUS, SCORING_MODE } from "@hackpulse/shared/constants";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { PairwiseJudging } from "../../../../components/pairwise-judging";
 import { LoadingState, TagPill, ThumbnailOrInitials } from "../../../../components/ui";
 import { api, ApiError } from "../../../../lib/api";
-
 interface QueueEntry {
   assignment: { id: string; status: string; submissionId: string };
   submission: Submission;
@@ -105,7 +105,7 @@ export default function JudgePage() {
 
   // scoringMode is event-wide, not per-track: every track uses either
   // rubric scoring or pairwise comparison, never a mix.
-  if (event.scoringMode === "pairwise") {
+  if (event.scoringMode === SCORING_MODE.PAIRWISE) {
     return <PairwiseJudging eventId={eventId} tracks={tracks} />;
   }
 
@@ -284,9 +284,9 @@ export default function JudgePage() {
               </div>
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  entry.assignment.status === "completed"
+                  entry.assignment.status === JUDGE_ASSIGNMENT_STATUS.COMPLETED
                     ? "bg-success-soft text-success"
-                    : entry.assignment.status === "in_progress"
+                    : entry.assignment.status === JUDGE_ASSIGNMENT_STATUS.IN_PROGRESS
                       ? "bg-warning-soft text-warning"
                       : "bg-surface-alt text-muted"
                 }`}

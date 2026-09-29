@@ -1,6 +1,12 @@
 "use client";
 
 import type { Event, MyEventInvite, Prize, Submission } from "@hackpulse/shared";
+import {
+  EVENT_ROLE,
+  EVENT_STATUS,
+  JUDGE_ASSIGNMENT_STATUS,
+  SCORING_MODE,
+} from "@hackpulse/shared/constants";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -12,7 +18,6 @@ import {
   type Placement,
   type ResultsResponse,
 } from "../lib/results";
-
 interface QueueEntry {
   assignment: { id: string; status: string };
 }
@@ -167,7 +172,7 @@ export function NotificationsBell() {
 
     async function load() {
       const judgeEventIds = user!.eventRoles
-        .filter((r) => r.role === "judge")
+        .filter((r) => r.role === EVENT_ROLE.JUDGE)
         .map((r) => r.eventId);
       // Found live ("did not receive any notification on judging the
       // submission"): this only ever checked the rubric-mode assignment
@@ -184,14 +189,18 @@ export function NotificationsBell() {
             return null;
           }
           const count =
-            event.scoringMode === "pairwise"
+            event.scoringMode === SCORING_MODE.PAIRWISE
               ? await api
                   .get<PairwiseProgressEntry[]>(`/events/${eventId}/pairwise/progress`)
                   .then((rows) => rows.reduce((sum, r) => sum + r.remaining, 0))
                   .catch(() => 0)
               : await api
                   .get<QueueEntry[]>(`/events/${eventId}/judging/queue`)
-                  .then((queue) => queue.filter((q) => q.assignment.status !== "completed").length)
+                  .then(
+                    (queue) =>
+                      queue.filter((q) => q.assignment.status !== JUDGE_ASSIGNMENT_STATUS.COMPLETED)
+                        .length,
+                  )
                   .catch(() => 0);
           return count > 0
             ? ({ kind: "judging", eventId, eventName: event.name, count } as PendingItem)
@@ -201,7 +210,7 @@ export function NotificationsBell() {
 
       const minePromise = api
         .get<{ items: Event[] }>("/events?phase=mine&limit=100")
-        .then((r) => r.items.filter((e) => e.status === "results_published"))
+        .then((r) => r.items.filter((e) => e.status === EVENT_STATUS.RESULTS_PUBLISHED))
         .catch(() => [] as Event[]);
 
       const invitesPromise = api.get<MyEventInvite[]>("/users/me/event-invites").catch(() => []);
@@ -373,7 +382,7 @@ export function NotificationsBell() {
                     >
                       <p>
                         <strong>{item.invitedByName}</strong>{" "}
-                        {item.role === "judge"
+                        {item.role === EVENT_ROLE.JUDGE
                           ? "invited you to judge"
                           : "invited you to co-organize"}{" "}
                         <strong>{item.eventName}</strong>
