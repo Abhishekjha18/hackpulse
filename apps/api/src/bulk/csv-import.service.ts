@@ -1,4 +1,4 @@
-import { ERROR_CODE } from "@hackpulse/shared";
+import { ERROR_CODE, SUBMISSION_STATUS } from "@hackpulse/shared";
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { and, eq, ilike } from "drizzle-orm";
 
@@ -212,6 +212,11 @@ export class CsvImportService {
       repoUrl: row.repoUrl || null,
       liveUrl: row.liveUrl || null,
       demoVideoUrl: row.demoVideoUrl || null,
+      // Imported entries are final entries, not drafts: judge assignment and
+      // the judging queue only consider submitted projects, so a draft here
+      // would leave an imported event with nothing to judge.
+      status: SUBMISSION_STATUS.SUBMITTED,
+      submittedAt: new Date(),
     });
   }
 }
