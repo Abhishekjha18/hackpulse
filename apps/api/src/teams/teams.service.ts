@@ -1,4 +1,4 @@
-import type { CreateTeamInput, CurrentUser } from "@hackpulse/shared";
+import { type CreateTeamInput, type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
 import {
   ConflictException,
   ForbiddenException,
@@ -30,7 +30,10 @@ export class TeamsService {
     if (event.registrationOpenAt === null) {
       if (event.status !== "registration_open") {
         throw new ConflictException({
-          error: { code: "REGISTRATION_NOT_OPEN", message: "Registration isn't open right now" },
+          error: {
+            code: ERROR_CODE.REGISTRATION_NOT_OPEN,
+            message: "Registration isn't open right now",
+          },
         });
       }
       return;
@@ -38,12 +41,15 @@ export class TeamsService {
     const now = new Date();
     if (now < event.registrationOpenAt) {
       throw new ConflictException({
-        error: { code: "REGISTRATION_NOT_OPEN", message: "Registration hasn't opened yet" },
+        error: {
+          code: ERROR_CODE.REGISTRATION_NOT_OPEN,
+          message: "Registration hasn't opened yet",
+        },
       });
     }
     if (now > event.registrationCloseAt!) {
       throw new ConflictException({
-        error: { code: "REGISTRATION_CLOSED", message: "Registration has closed" },
+        error: { code: ERROR_CODE.REGISTRATION_CLOSED, message: "Registration has closed" },
       });
     }
   }
@@ -60,7 +66,7 @@ export class TeamsService {
     ) {
       throw new ConflictException({
         error: {
-          code: "CONFLICT",
+          code: ERROR_CODE.CONFLICT,
           message: "You organize or judge this event, so you can't also participate in it",
         },
       });
@@ -79,7 +85,7 @@ export class TeamsService {
     if (existing) {
       throw new ConflictException({
         error: {
-          code: "CONFLICT",
+          code: ERROR_CODE.CONFLICT,
           message: `Already on team "${existing.teamName}" for this event`,
         },
       });
@@ -237,7 +243,7 @@ export class TeamsService {
       if (otherTeam) {
         throw new ConflictException({
           error: {
-            code: "CONFLICT",
+            code: ERROR_CODE.CONFLICT,
             message: `Already on team "${otherTeam.teamName}" for this event`,
           },
         });
@@ -255,7 +261,10 @@ export class TeamsService {
 
       if (memberCount >= event.maxTeamSize) {
         throw new ConflictException({
-          error: { code: "CONFLICT", message: `Team is at its ${event.maxTeamSize}-member limit` },
+          error: {
+            code: ERROR_CODE.CONFLICT,
+            message: `Team is at its ${event.maxTeamSize}-member limit`,
+          },
         });
       }
 
@@ -306,7 +315,7 @@ export class TeamsService {
 
     if (targetUserId === team.ownerUserId) {
       throw new ConflictException({
-        error: { code: "CONFLICT", message: "The team owner cannot be removed" },
+        error: { code: ERROR_CODE.CONFLICT, message: "The team owner cannot be removed" },
       });
     }
 

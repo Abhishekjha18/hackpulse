@@ -1,4 +1,4 @@
-import type { CurrentUser } from "@hackpulse/shared";
+import { type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
 import { InjectQueue } from "@nestjs/bullmq";
 import { ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Queue } from "bullmq";
@@ -59,7 +59,7 @@ export class CertificatesService {
     }
     if (!cert.pdfObjectKey) {
       throw new NotFoundException({
-        error: { code: "NOT_FOUND", message: "Certificate is still being generated" },
+        error: { code: ERROR_CODE.NOT_FOUND, message: "Certificate is still being generated" },
       });
     }
     return cert;

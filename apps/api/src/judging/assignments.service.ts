@@ -1,4 +1,4 @@
-import type { CreateAssignmentsInput } from "@hackpulse/shared";
+import { type CreateAssignmentsInput, ERROR_CODE } from "@hackpulse/shared";
 import {
   BadRequestException,
   ConflictException,
@@ -105,7 +105,7 @@ export class AssignmentsService {
       if (event.status !== "judging") {
         throw new ConflictException({
           error: {
-            code: "JUDGING_NOT_STARTED",
+            code: ERROR_CODE.JUDGING_NOT_STARTED,
             message: "Judges can't be assigned until the event moves to judging",
           },
         });
@@ -115,7 +115,7 @@ export class AssignmentsService {
     if (new Date() < event.judgingOpenAt) {
       throw new ConflictException({
         error: {
-          code: "JUDGING_NOT_STARTED",
+          code: ERROR_CODE.JUDGING_NOT_STARTED,
           message: "Judges can't be assigned until the judging phase has started",
         },
       });
@@ -228,7 +228,10 @@ export class AssignmentsService {
     const judges = await this.judgeTrackScope.scopedJudgesForTrack(eventId, trackId);
     if (judges.length === 0) {
       throw new BadRequestException({
-        error: { code: "VALIDATION_ERROR", message: "No judges are scoped to this track yet" },
+        error: {
+          code: ERROR_CODE.VALIDATION_ERROR,
+          message: "No judges are scoped to this track yet",
+        },
       });
     }
 

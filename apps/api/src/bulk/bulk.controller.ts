@@ -1,4 +1,4 @@
-import type { CurrentUser as CurrentUserType } from "@hackpulse/shared";
+import { type CurrentUser as CurrentUserType, ERROR_CODE } from "@hackpulse/shared";
 import { BadRequestException, Body, Controller, Get, Param, Post, Res } from "@nestjs/common";
 import type { FastifyReply } from "fastify";
 
@@ -23,13 +23,19 @@ import { EXPORTABLE_RESOURCES, type ExportableResource, ExportService } from "./
 function coerceJsonRowsToStrings(json: unknown): Record<string, string>[] {
   if (!Array.isArray(json)) {
     throw new BadRequestException({
-      error: { code: "VALIDATION_ERROR", message: '"json" must be an array of row objects' },
+      error: {
+        code: ERROR_CODE.VALIDATION_ERROR,
+        message: '"json" must be an array of row objects',
+      },
     });
   }
   return json.map((row) => {
     if (typeof row !== "object" || row === null || Array.isArray(row)) {
       throw new BadRequestException({
-        error: { code: "VALIDATION_ERROR", message: 'Each row in "json" must be an object' },
+        error: {
+          code: ERROR_CODE.VALIDATION_ERROR,
+          message: 'Each row in "json" must be an object',
+        },
       });
     }
     return Object.fromEntries(
@@ -96,7 +102,7 @@ export class BulkExportController {
     if (!EXPORTABLE_RESOURCES.includes(resource as ExportableResource)) {
       throw new BadRequestException({
         error: {
-          code: "VALIDATION_ERROR",
+          code: ERROR_CODE.VALIDATION_ERROR,
           message: `resource must be one of: ${EXPORTABLE_RESOURCES.join(", ")}`,
         },
       });
@@ -145,7 +151,7 @@ export class BulkExportController {
     if (!CSV_IMPORTABLE_RESOURCES.includes(resource as CsvImportableResource)) {
       throw new BadRequestException({
         error: {
-          code: "VALIDATION_ERROR",
+          code: ERROR_CODE.VALIDATION_ERROR,
           message: `resource must be one of: ${CSV_IMPORTABLE_RESOURCES.join(", ")}`,
         },
       });
@@ -153,7 +159,7 @@ export class BulkExportController {
     if (!body?.csv && !body?.json) {
       throw new BadRequestException({
         error: {
-          code: "VALIDATION_ERROR",
+          code: ERROR_CODE.VALIDATION_ERROR,
           message: 'Request body must include a "csv" or a "json" field',
         },
       });

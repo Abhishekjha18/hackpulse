@@ -1,10 +1,10 @@
+import { ERROR_CODE } from "@hackpulse/shared";
 import { ConflictException, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 
 import type { AuditService } from "../audit/audit.service";
 import type { Database } from "../db/client";
 import { events } from "../db/schema";
-
 // FR-EVT-01 names "judging window" as a real, organizer-set field
 // alongside registration/submission windows, but unlike those two it was
 // never enforced: a judge could score or compare before judgingOpenAt or
@@ -39,7 +39,7 @@ export async function assertJudgingWindowOpen(
         metadata: { attemptedAction, reason: "not_open" },
       });
       throw new ConflictException({
-        error: { code: "JUDGING_NOT_OPEN", message: "Judging isn't open right now" },
+        error: { code: ERROR_CODE.JUDGING_NOT_OPEN, message: "Judging isn't open right now" },
       });
     }
     return;

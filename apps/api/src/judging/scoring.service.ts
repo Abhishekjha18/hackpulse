@@ -1,4 +1,4 @@
-import type { CurrentUser, SaveScoreInput } from "@hackpulse/shared";
+import { type CurrentUser, ERROR_CODE, type SaveScoreInput } from "@hackpulse/shared";
 import {
   BadRequestException,
   ConflictException,
@@ -77,7 +77,7 @@ export class ScoringService {
     if (duplicate) {
       throw new BadRequestException({
         error: {
-          code: "VALIDATION_ERROR",
+          code: ERROR_CODE.VALIDATION_ERROR,
           message: `Criterion ${duplicate} appears more than once`,
         },
       });
@@ -86,13 +86,16 @@ export class ScoringService {
     for (const cs of input.criterionScores) {
       if (!validIds.has(cs.rubricCriterionId)) {
         throw new BadRequestException({
-          error: { code: "VALIDATION_ERROR", message: `Unknown criterion ${cs.rubricCriterionId}` },
+          error: {
+            code: ERROR_CODE.VALIDATION_ERROR,
+            message: `Unknown criterion ${cs.rubricCriterionId}`,
+          },
         });
       }
       if (cs.value < scaleMin || cs.value > scaleMax) {
         throw new BadRequestException({
           error: {
-            code: "VALIDATION_ERROR",
+            code: ERROR_CODE.VALIDATION_ERROR,
             message: `Score ${cs.value} outside the rubric's ${scaleMin}-${scaleMax} scale`,
           },
         });
@@ -108,7 +111,10 @@ export class ScoringService {
     const rubric = await this.resolveRubric(assignment.eventId, submission.trackId);
     if (!rubric) {
       throw new BadRequestException({
-        error: { code: "VALIDATION_ERROR", message: "No rubric configured for this track yet" },
+        error: {
+          code: ERROR_CODE.VALIDATION_ERROR,
+          message: "No rubric configured for this track yet",
+        },
       });
     }
 
@@ -240,13 +246,16 @@ export class ScoringService {
       .where(eq(scores.judgeAssignmentId, assignmentId));
     if (!score) {
       throw new BadRequestException({
-        error: { code: "VALIDATION_ERROR", message: "Save a draft score before submitting" },
+        error: {
+          code: ERROR_CODE.VALIDATION_ERROR,
+          message: "Save a draft score before submitting",
+        },
       });
     }
     if (score.status === "submitted") {
       throw new ConflictException({
         error: {
-          code: "CONFLICT",
+          code: ERROR_CODE.CONFLICT,
           message: "Already submitted. Use the save endpoint to revise it",
         },
       });
@@ -264,7 +273,7 @@ export class ScoringService {
     if (values.length !== criteria.length) {
       throw new BadRequestException({
         error: {
-          code: "VALIDATION_ERROR",
+          code: ERROR_CODE.VALIDATION_ERROR,
           message: "Every criterion must be scored before submitting",
         },
       });

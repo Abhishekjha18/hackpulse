@@ -1,4 +1,9 @@
-import type { EventRoleListEntry, InviteJudgeInput, SelfJudgeInput } from "@hackpulse/shared";
+import {
+  ERROR_CODE,
+  type EventRoleListEntry,
+  type InviteJudgeInput,
+  type SelfJudgeInput,
+} from "@hackpulse/shared";
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { and, eq, inArray } from "drizzle-orm";
 
@@ -50,7 +55,7 @@ export class JudgesService {
     if (validTracks.length !== input.trackIds.length) {
       throw new BadRequestException({
         error: {
-          code: "VALIDATION_ERROR",
+          code: ERROR_CODE.VALIDATION_ERROR,
           message: "One or more trackIds don't belong to this event",
         },
       });

@@ -1,4 +1,4 @@
-import type { CurrentUser } from "@hackpulse/shared";
+import { type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
 import { ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { eq, ilike, inArray } from "drizzle-orm";
 
@@ -174,7 +174,7 @@ export class ArchiveService {
     if (!importingUser.isAdmin && !importingUser.canOrganizeEvents) {
       throw new ForbiddenException({
         error: {
-          code: "NOT_AUTHORIZED_TO_ORGANIZE",
+          code: ERROR_CODE.NOT_AUTHORIZED_TO_ORGANIZE,
           message:
             "You don't have permission to create events. Ask an admin to grant you organizer access.",
         },
@@ -182,7 +182,10 @@ export class ArchiveService {
     }
     if (!archive || archive.version !== ARCHIVE_VERSION || !archive.event) {
       throw new NotFoundException({
-        error: { code: "VALIDATION_ERROR", message: "Not a recognizable HackPulse event archive" },
+        error: {
+          code: ERROR_CODE.VALIDATION_ERROR,
+          message: "Not a recognizable HackPulse event archive",
+        },
       });
     }
 

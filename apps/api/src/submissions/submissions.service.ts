@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
 
-import type {
-  CreateSubmissionInput,
-  CurrentUser,
-  SetCustomAnswersInput,
-  UpdateSubmissionInput,
+import {
+  type CreateSubmissionInput,
+  type CurrentUser,
+  ERROR_CODE,
+  type SetCustomAnswersInput,
+  type UpdateSubmissionInput,
 } from "@hackpulse/shared";
 import {
   BadRequestException,
@@ -133,7 +134,10 @@ export class SubmissionsService {
 
     if (!row) {
       throw new ForbiddenException({
-        error: { code: "FORBIDDEN", message: "You must be on a team for this event first" },
+        error: {
+          code: ERROR_CODE.FORBIDDEN,
+          message: "You must be on a team for this event first",
+        },
       });
     }
     return row.team;
@@ -186,7 +190,10 @@ export class SubmissionsService {
         metadata: { attemptedAction, reason: "not_open" },
       });
       throw new ConflictException({
-        error: { code: "SUBMISSIONS_NOT_OPEN", message: "Submissions aren't open right now" },
+        error: {
+          code: ERROR_CODE.SUBMISSIONS_NOT_OPEN,
+          message: "Submissions aren't open right now",
+        },
       });
     }
     const now = new Date();
@@ -253,7 +260,10 @@ export class SubmissionsService {
         (err as { code?: string }).code;
       if (pgCode === "23505") {
         throw new ConflictException({
-          error: { code: "CONFLICT", message: "Your team already has a submission for this track" },
+          error: {
+            code: ERROR_CODE.CONFLICT,
+            message: "Your team already has a submission for this track",
+          },
         });
       }
       throw err;
@@ -321,7 +331,7 @@ export class SubmissionsService {
 
     if (!this.rateLimiter.consume("submission-edit", currentUser.id, 60_000, 20)) {
       throw new HttpException(
-        { error: { code: "RATE_LIMITED", message: "Too many edits, please slow down" } },
+        { error: { code: ERROR_CODE.RATE_LIMITED, message: "Too many edits, please slow down" } },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
@@ -368,7 +378,7 @@ export class SubmissionsService {
 
     if (submission.status === "submitted") {
       throw new ConflictException({
-        error: { code: "CONFLICT", message: "Already submitted" },
+        error: { code: ERROR_CODE.CONFLICT, message: "Already submitted" },
       });
     }
 
@@ -399,7 +409,7 @@ export class SubmissionsService {
       if (missing.length > 0) {
         throw new BadRequestException({
           error: {
-            code: "VALIDATION_ERROR",
+            code: ERROR_CODE.VALIDATION_ERROR,
             message: `Missing required answers: ${missing.map((q) => q.label).join(", ")}`,
           },
         });

@@ -1,9 +1,10 @@
-import type {
-  CreateEventInput,
-  CreateTrackInput,
-  CurrentUser,
-  EventStatus,
-  UpdateEventInput,
+import {
+  type CreateEventInput,
+  type CreateTrackInput,
+  type CurrentUser,
+  ERROR_CODE,
+  type EventStatus,
+  type UpdateEventInput,
 } from "@hackpulse/shared";
 import {
   BadRequestException,
@@ -176,13 +177,16 @@ type LifecycleDates = Record<(typeof LIFECYCLE_DATE_FIELDS)[number], Date>;
 function assertAutomaticDatesValid(dates: LifecycleDates, opts: { isCreate: boolean }) {
   if (opts.isCreate && dates.registrationOpenAt <= new Date()) {
     throw new BadRequestException({
-      error: { code: "VALIDATION_ERROR", message: "registrationOpenAt must be in the future" },
+      error: {
+        code: ERROR_CODE.VALIDATION_ERROR,
+        message: "registrationOpenAt must be in the future",
+      },
     });
   }
   if (dates.registrationOpenAt >= dates.registrationCloseAt) {
     throw new BadRequestException({
       error: {
-        code: "VALIDATION_ERROR",
+        code: ERROR_CODE.VALIDATION_ERROR,
         message: "registrationCloseAt must be after registrationOpenAt",
       },
     });
@@ -196,7 +200,7 @@ function assertAutomaticDatesValid(dates: LifecycleDates, opts: { isCreate: bool
   if (dates.submissionOpenAt < dates.registrationCloseAt) {
     throw new BadRequestException({
       error: {
-        code: "VALIDATION_ERROR",
+        code: ERROR_CODE.VALIDATION_ERROR,
         message: "submissionOpenAt cannot be before registrationCloseAt",
       },
     });
@@ -204,14 +208,17 @@ function assertAutomaticDatesValid(dates: LifecycleDates, opts: { isCreate: bool
   if (dates.submissionOpenAt >= dates.submissionCloseAt) {
     throw new BadRequestException({
       error: {
-        code: "VALIDATION_ERROR",
+        code: ERROR_CODE.VALIDATION_ERROR,
         message: "submissionCloseAt must be after submissionOpenAt",
       },
     });
   }
   if (dates.judgingOpenAt >= dates.judgingCloseAt) {
     throw new BadRequestException({
-      error: { code: "VALIDATION_ERROR", message: "judgingCloseAt must be after judgingOpenAt" },
+      error: {
+        code: ERROR_CODE.VALIDATION_ERROR,
+        message: "judgingCloseAt must be after judgingOpenAt",
+      },
     });
   }
   // FR-EVT-02 — judging shouldn't be able to start before submissions are
@@ -220,7 +227,7 @@ function assertAutomaticDatesValid(dates: LifecycleDates, opts: { isCreate: bool
   if (dates.judgingOpenAt < dates.submissionCloseAt) {
     throw new BadRequestException({
       error: {
-        code: "VALIDATION_ERROR",
+        code: ERROR_CODE.VALIDATION_ERROR,
         message: "judgingOpenAt cannot be before submissionCloseAt",
       },
     });
@@ -252,7 +259,7 @@ function assertPastDatesUnchanged(existing: LifecycleDates, input: UpdateEventIn
     }
     throw new ConflictException({
       error: {
-        code: "LIFECYCLE_DATE_LOCKED",
+        code: ERROR_CODE.LIFECYCLE_DATE_LOCKED,
         message: `${field} has already passed and can no longer be changed`,
       },
     });
@@ -283,13 +290,16 @@ async function assertValidStatusTransition(
   }
   if (existing.status === "archived") {
     throw new ConflictException({
-      error: { code: "EVENT_ARCHIVED", message: "An archived event's status can't be changed" },
+      error: {
+        code: ERROR_CODE.EVENT_ARCHIVED,
+        message: "An archived event's status can't be changed",
+      },
     });
   }
   if (requestedStatus === "results_published") {
     throw new ConflictException({
       error: {
-        code: "USE_PUBLISH_ENDPOINT",
+        code: ERROR_CODE.USE_PUBLISH_ENDPOINT,
         message: "Publish results via POST .../results/publish, not a direct status change",
       },
     });
@@ -298,7 +308,7 @@ async function assertValidStatusTransition(
     if (existing.status !== "results_published") {
       throw new ConflictException({
         error: {
-          code: "RESULTS_NOT_PUBLISHED",
+          code: ERROR_CODE.RESULTS_NOT_PUBLISHED,
           message: "An event can only be archived after its results have been published",
         },
       });
@@ -323,7 +333,7 @@ async function assertValidStatusTransition(
     }
     throw new ConflictException({
       error: {
-        code: "AUTOMATIC_MODE_STATUS_LOCKED",
+        code: ERROR_CODE.AUTOMATIC_MODE_STATUS_LOCKED,
         message:
           "This event's status is computed from its configured dates and can't be set directly",
       },
@@ -342,7 +352,7 @@ async function assertValidStatusTransition(
       if (submitted) {
         throw new ConflictException({
           error: {
-            code: "SUBMISSIONS_EXIST",
+            code: ERROR_CODE.SUBMISSIONS_EXIST,
             message: "Can't move back to registration, submissions already exist",
           },
         });
@@ -364,7 +374,7 @@ async function assertValidStatusTransition(
       if (scored || compared) {
         throw new ConflictException({
           error: {
-            code: "JUDGING_STARTED",
+            code: ERROR_CODE.JUDGING_STARTED,
             message: "Can't move back, judging has already started",
           },
         });
@@ -381,7 +391,7 @@ async function assertValidStatusTransition(
   if (STATUS_RANK[requestedStatus] !== STATUS_RANK[existing.status] + 1) {
     throw new ConflictException({
       error: {
-        code: "STATUS_MUST_BE_SEQUENTIAL",
+        code: ERROR_CODE.STATUS_MUST_BE_SEQUENTIAL,
         message: `Status can only move forward one step at a time. From "${existing.status}" the next status is the only valid target.`,
       },
     });
@@ -402,7 +412,7 @@ export class EventsService {
     if (!currentUser.isAdmin && !currentUser.canOrganizeEvents) {
       throw new ForbiddenException({
         error: {
-          code: "NOT_AUTHORIZED_TO_ORGANIZE",
+          code: ERROR_CODE.NOT_AUTHORIZED_TO_ORGANIZE,
           message:
             "You don't have permission to create events. Ask an admin to grant you organizer access.",
         },
@@ -414,7 +424,7 @@ export class EventsService {
     if (providedCount !== 0 && providedCount !== LIFECYCLE_DATE_FIELDS.length) {
       throw new BadRequestException({
         error: {
-          code: "VALIDATION_ERROR",
+          code: ERROR_CODE.VALIDATION_ERROR,
           message:
             "registrationOpenAt/CloseAt, submissionOpenAt/CloseAt, and judgingOpenAt/CloseAt must all be provided together (automatic mode) or all omitted (manual mode)",
         },
@@ -681,7 +691,7 @@ export class EventsService {
       if (existingMode === "manual" && wouldGoAutomatic) {
         throw new ConflictException({
           error: {
-            code: "LIFECYCLE_MODE_LOCKED",
+            code: ERROR_CODE.LIFECYCLE_MODE_LOCKED,
             message:
               "This event has no configured dates (manual mode) and can't switch to automatic mode",
           },
@@ -690,7 +700,7 @@ export class EventsService {
       if (existingMode === "automatic" && !wouldGoAutomatic) {
         throw new ConflictException({
           error: {
-            code: "LIFECYCLE_MODE_LOCKED",
+            code: ERROR_CODE.LIFECYCLE_MODE_LOCKED,
             message:
               "This event has configured dates (automatic mode) and can't switch to manual mode",
           },
@@ -719,7 +729,7 @@ export class EventsService {
         if (latest?.submittedAt && newClose < latest.submittedAt) {
           throw new ConflictException({
             error: {
-              code: "CONFLICT",
+              code: ERROR_CODE.CONFLICT,
               message:
                 "submissionCloseAt cannot move earlier than the most recent accepted submission",
             },
@@ -793,7 +803,7 @@ export class EventsService {
     if (submission) {
       throw new ConflictException({
         error: {
-          code: "CONFLICT",
+          code: ERROR_CODE.CONFLICT,
           message: "This track has submissions in it and can't be deleted",
         },
       });

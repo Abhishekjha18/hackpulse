@@ -1,4 +1,4 @@
-import type { CreateRubricInput } from "@hackpulse/shared";
+import { type CreateRubricInput, ERROR_CODE } from "@hackpulse/shared";
 import {
   ConflictException,
   Inject,
@@ -50,7 +50,7 @@ export class RubricsService {
     if (existing) {
       throw new ConflictException({
         error: {
-          code: "CONFLICT",
+          code: ERROR_CODE.CONFLICT,
           message: `This ${input.trackId === null ? "event" : "track"} already has an active rubric ("${existing.name}"). Archive it first to replace it.`,
         },
       });
@@ -60,7 +60,7 @@ export class RubricsService {
     if (Math.abs(totalWeight - 1) > WEIGHT_SUM_TOLERANCE) {
       throw new UnprocessableEntityException({
         error: {
-          code: "VALIDATION_ERROR",
+          code: ERROR_CODE.VALIDATION_ERROR,
           message: `Criterion weights must sum to 1.0 (got ${totalWeight.toFixed(4)})`,
         },
       });
@@ -171,7 +171,7 @@ export class RubricsService {
     if (score) {
       throw new ConflictException({
         error: {
-          code: "CONFLICT",
+          code: ERROR_CODE.CONFLICT,
           message: "This rubric already has scores against it and can't be deleted",
         },
       });
@@ -209,7 +209,7 @@ export class RubricsService {
     if (allCriteria.length <= 1) {
       throw new ConflictException({
         error: {
-          code: "CONFLICT",
+          code: ERROR_CODE.CONFLICT,
           message: "Can't delete a rubric's last criterion. Delete the whole rubric instead",
         },
       });
@@ -223,7 +223,7 @@ export class RubricsService {
     if (criterionScore) {
       throw new ConflictException({
         error: {
-          code: "CONFLICT",
+          code: ERROR_CODE.CONFLICT,
           message: "This criterion already has scores against it and can't be deleted",
         },
       });

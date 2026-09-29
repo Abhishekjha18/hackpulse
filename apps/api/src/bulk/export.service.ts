@@ -1,3 +1,4 @@
+import { ERROR_CODE } from "@hackpulse/shared";
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 
@@ -18,7 +19,6 @@ import {
   votes,
 } from "../db/schema";
 import { DB } from "../db/tokens";
-
 export const EXPORTABLE_RESOURCES = [
   "registrations",
   "teams",
@@ -194,7 +194,10 @@ export class ExportService {
 
       default:
         throw new BadRequestException({
-          error: { code: "VALIDATION_ERROR", message: `Unknown export resource: ${resource}` },
+          error: {
+            code: ERROR_CODE.VALIDATION_ERROR,
+            message: `Unknown export resource: ${resource}`,
+          },
         });
     }
   }

@@ -1,4 +1,4 @@
-import type { CreateCommentInput, CurrentUser } from "@hackpulse/shared";
+import { type CreateCommentInput, type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
 import {
   ForbiddenException,
   HttpException,
@@ -36,7 +36,9 @@ export class CommentsService {
       // would otherwise read this as a permissions error. Matches
       // voting.service.ts's rate-limit response.
       throw new HttpException(
-        { error: { code: "RATE_LIMITED", message: "Too many comments, please slow down" } },
+        {
+          error: { code: ERROR_CODE.RATE_LIMITED, message: "Too many comments, please slow down" },
+        },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }

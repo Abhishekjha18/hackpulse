@@ -1,3 +1,4 @@
+import { ERROR_CODE } from "@hackpulse/shared";
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { and, eq, ilike } from "drizzle-orm";
 
@@ -5,7 +6,6 @@ import type { Database } from "../db/client";
 import { events, submissions, teamMembers, teams, tracks, user } from "../db/schema";
 import { DB } from "../db/tokens";
 import { generateInviteCode } from "../teams/invite-code";
-
 export const CSV_IMPORTABLE_RESOURCES = ["teams", "registrations", "submissions"] as const;
 export type CsvImportableResource = (typeof CSV_IMPORTABLE_RESOURCES)[number];
 
@@ -65,7 +65,7 @@ export class CsvImportService {
 
     if (rows.length === 0) {
       throw new BadRequestException({
-        error: { code: "VALIDATION_ERROR", message: "No data rows to import" },
+        error: { code: ERROR_CODE.VALIDATION_ERROR, message: "No data rows to import" },
       });
     }
 

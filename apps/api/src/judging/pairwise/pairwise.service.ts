@@ -1,4 +1,4 @@
-import type { PairwiseCompareInput } from "@hackpulse/shared";
+import { ERROR_CODE, type PairwiseCompareInput } from "@hackpulse/shared";
 import {
   BadRequestException,
   ConflictException,
@@ -35,7 +35,7 @@ export class PairwiseService {
     if (subs.length < 2) {
       throw new BadRequestException({
         error: {
-          code: "VALIDATION_ERROR",
+          code: ERROR_CODE.VALIDATION_ERROR,
           message: "Need at least two submitted projects in this track",
         },
       });
@@ -86,7 +86,7 @@ export class PairwiseService {
     // a next pair.
     throw new ConflictException({
       error: {
-        code: "ALL_PAIRS_COMPARED",
+        code: ERROR_CODE.ALL_PAIRS_COMPARED,
         message: "You've compared every pair in this track. Nothing left to judge here.",
       },
     });
@@ -249,7 +249,7 @@ export class PairwiseService {
       );
     if (alreadyCompared) {
       throw new ConflictException({
-        error: { code: "ALREADY_COMPARED", message: "You've already compared this pair." },
+        error: { code: ERROR_CODE.ALREADY_COMPARED, message: "You've already compared this pair." },
       });
     }
 

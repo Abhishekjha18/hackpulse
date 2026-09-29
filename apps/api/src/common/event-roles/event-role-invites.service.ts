@@ -1,4 +1,9 @@
-import type { EventRole, EventRoleListEntry, MyEventInvite } from "@hackpulse/shared";
+import {
+  ERROR_CODE,
+  type EventRole,
+  type EventRoleListEntry,
+  type MyEventInvite,
+} from "@hackpulse/shared";
 import {
   ConflictException,
   ForbiddenException,
@@ -53,7 +58,7 @@ export class EventRoleInvitesService {
     if (!invitee) {
       throw new NotFoundException({
         error: {
-          code: "NOT_FOUND",
+          code: ERROR_CODE.NOT_FOUND,
           message: "No account with that email yet. They need to register before being invited",
         },
       });
@@ -67,7 +72,7 @@ export class EventRoleInvitesService {
       if (validTracks.length !== trackIds.length) {
         throw new NotFoundException({
           error: {
-            code: "VALIDATION_ERROR",
+            code: ERROR_CODE.VALIDATION_ERROR,
             message: "One or more trackIds don't belong to this event",
           },
         });
@@ -132,7 +137,10 @@ export class EventRoleInvitesService {
     }
     if (invite.status !== "pending") {
       throw new ConflictException({
-        error: { code: "ALREADY_RESOLVED", message: "This invite has already been responded to." },
+        error: {
+          code: ERROR_CODE.ALREADY_RESOLVED,
+          message: "This invite has already been responded to.",
+        },
       });
     }
     return invite;
@@ -153,7 +161,7 @@ export class EventRoleInvitesService {
     if (existingMembership) {
       throw new ConflictException({
         error: {
-          code: "CONFLICT",
+          code: ERROR_CODE.CONFLICT,
           message:
             "You're already participating in this event, so you can't also organize or judge it",
         },

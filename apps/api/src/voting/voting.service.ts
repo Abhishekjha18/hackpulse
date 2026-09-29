@@ -1,4 +1,4 @@
-import type { CastVoteInput, CurrentUser } from "@hackpulse/shared";
+import { type CastVoteInput, type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
 import {
   BadRequestException,
   ConflictException,
@@ -62,7 +62,7 @@ export class VotingService {
     }
     throw new BadRequestException({
       error: {
-        code: "VALIDATION_ERROR",
+        code: ERROR_CODE.VALIDATION_ERROR,
         message: "Anonymous voting requires an X-Voter-Token header (client-generated, persisted)",
       },
     });
@@ -87,7 +87,7 @@ export class VotingService {
 
     if (event.votingAccess === "authenticated") {
       throw new ForbiddenException({
-        error: { code: "FORBIDDEN", message: "This event requires an account to vote" },
+        error: { code: ERROR_CODE.FORBIDDEN, message: "This event requires an account to vote" },
       });
     }
 
@@ -96,7 +96,7 @@ export class VotingService {
       if (!normalized || !EMAIL_PATTERN.test(normalized)) {
         throw new BadRequestException({
           error: {
-            code: "VALIDATION_ERROR",
+            code: ERROR_CODE.VALIDATION_ERROR,
             message: "This event requires a valid email address to vote (X-Voter-Email header)",
           },
         });
@@ -142,20 +142,26 @@ export class VotingService {
     });
     if (reason === "VOTING_CLOSED") {
       throw new ConflictException({
-        error: { code: "VOTING_CLOSED", message: "Voting isn't open for this event right now" },
+        error: {
+          code: ERROR_CODE.VOTING_CLOSED,
+          message: "Voting isn't open for this event right now",
+        },
       });
     }
     if (reason === "EVENT_STAFF") {
       throw new ForbiddenException({
         error: {
-          code: "FORBIDDEN",
+          code: ERROR_CODE.FORBIDDEN,
           message: "Judges and organizers of an event can't vote in it",
         },
       });
     }
     if (reason === "OWN_SUBMISSION") {
       throw new ForbiddenException({
-        error: { code: "FORBIDDEN", message: "You can't vote for your own team's submission" },
+        error: {
+          code: ERROR_CODE.FORBIDDEN,
+          message: "You can't vote for your own team's submission",
+        },
       });
     }
   }
@@ -186,7 +192,7 @@ export class VotingService {
     }
     if (event.votingMode === "disabled") {
       throw new ForbiddenException({
-        error: { code: "FORBIDDEN", message: "Voting is not enabled for this event" },
+        error: { code: ERROR_CODE.FORBIDDEN, message: "Voting is not enabled for this event" },
       });
     }
 
@@ -202,7 +208,7 @@ export class VotingService {
       throw new HttpException(
         {
           error: {
-            code: "RATE_LIMITED",
+            code: ERROR_CODE.RATE_LIMITED,
             message: "Too many anonymous votes on this event right now, please try again shortly",
           },
         },
@@ -212,7 +218,12 @@ export class VotingService {
 
     if (!this.rateLimiter.consume("vote", voter.voterId, 60_000, 20)) {
       throw new HttpException(
-        { error: { code: "RATE_LIMITED", message: "Too many votes cast, please slow down" } },
+        {
+          error: {
+            code: ERROR_CODE.RATE_LIMITED,
+            message: "Too many votes cast, please slow down",
+          },
+        },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
@@ -234,7 +245,7 @@ export class VotingService {
       if (input.votes !== 1) {
         throw new BadRequestException({
           error: {
-            code: "VALIDATION_ERROR",
+            code: ERROR_CODE.VALIDATION_ERROR,
             message: "This event allows exactly one vote per submission",
           },
         });
@@ -258,7 +269,7 @@ export class VotingService {
       if (cost > remaining) {
         throw new ConflictException({
           error: {
-            code: "CONFLICT",
+            code: ERROR_CODE.CONFLICT,
             message: `Not enough voice credits left (${remaining.toFixed(2)} remaining, this costs ${cost.toFixed(2)})`,
           },
         });

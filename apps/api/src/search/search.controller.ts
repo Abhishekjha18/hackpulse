@@ -1,4 +1,4 @@
-import type { CurrentUser as CurrentUserType } from "@hackpulse/shared";
+import { type CurrentUser as CurrentUserType, ERROR_CODE } from "@hackpulse/shared";
 import { BadRequestException, Controller, Get, Query } from "@nestjs/common";
 
 import { CurrentUser } from "../auth/current-user.decorator";
@@ -19,7 +19,7 @@ export class SearchController {
     const query = (q ?? "").trim();
     if (query.length < 2) {
       throw new BadRequestException({
-        error: { code: "VALIDATION_ERROR", message: "q must be at least 2 characters" },
+        error: { code: ERROR_CODE.VALIDATION_ERROR, message: "q must be at least 2 characters" },
       });
     }
     return this.searchService.search(query, user, limit ? Number(limit) : undefined);

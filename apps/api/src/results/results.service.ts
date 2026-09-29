@@ -1,4 +1,4 @@
-import type { CurrentUser } from "@hackpulse/shared";
+import { type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
 import {
   ConflictException,
   ForbiddenException,
@@ -242,7 +242,7 @@ export class ResultsService {
     if (unjudged.length > 0) {
       throw new ConflictException({
         error: {
-          code: "UNJUDGED_SUBMISSIONS",
+          code: ERROR_CODE.UNJUDGED_SUBMISSIONS,
           message:
             unjudged.length === 1
               ? `"${unjudged[0].name}" hasn't been judged yet. Results can't publish until every submitted project has at least one completed score or comparison.`
@@ -263,7 +263,7 @@ export class ResultsService {
       if (event.status !== "judging") {
         throw new ConflictException({
           error: {
-            code: "JUDGING_STILL_OPEN",
+            code: ERROR_CODE.JUDGING_STILL_OPEN,
             message: "Results can't publish until the event is in judging",
           },
         });
@@ -271,7 +271,7 @@ export class ResultsService {
     } else if (new Date() < event.judgingCloseAt) {
       throw new ConflictException({
         error: {
-          code: "JUDGING_STILL_OPEN",
+          code: ERROR_CODE.JUDGING_STILL_OPEN,
           message: "Results can't publish until the judging deadline has passed",
         },
       });
