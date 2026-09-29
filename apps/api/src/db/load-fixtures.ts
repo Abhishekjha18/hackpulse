@@ -8,8 +8,10 @@ import {
   EVENT_ROLE,
   EVENT_STATUS,
   GALLERY_VISIBILITY,
+  JUDGE_ASSIGNMENT_STATUS,
   SCORE_STATUS,
   SCORING_MODE,
+  SUBMISSION_STATUS,
   VOTING_ACCESS,
   VOTING_MODE,
 } from "@hackpulse/shared";
@@ -302,7 +304,7 @@ async function main() {
           tagline: p.summary,
           description: p.summary,
           repoUrl: p.repo_url,
-          status: "submitted",
+          status: SUBMISSION_STATUS.SUBMITTED,
           submittedAt: new Date(p.submitted_at),
           updatedAt: new Date(p.submitted_at),
         })
@@ -363,7 +365,7 @@ async function main() {
         eventId: event.id,
         judgeUserId,
         submissionId,
-        status: "completed",
+        status: JUDGE_ASSIGNMENT_STATUS.COMPLETED,
         assignedByUserId: organizer.id,
       })
       .returning();
@@ -375,7 +377,7 @@ async function main() {
       .values({
         judgeAssignmentId: assignment.id,
         rubricId: rubric.id,
-        status: "submitted",
+        status: SCORE_STATUS.SUBMITTED,
         rawWeightedScore: rawWeighted.toFixed(3),
         overallFeedback: s.comment || null,
         submittedAt: new Date(),
@@ -433,7 +435,7 @@ async function main() {
       eventId: event.id,
       judgeUserId: checkerJudgeA.id,
       submissionId: anchorSubmissionId,
-      status: "completed",
+      status: JUDGE_ASSIGNMENT_STATUS.COMPLETED,
       assignedByUserId: organizer.id,
     })
     .returning();
@@ -442,7 +444,7 @@ async function main() {
     .values({
       judgeAssignmentId: judgeAAssignment.id,
       rubricId: rubric.id,
-      status: "submitted",
+      status: SCORE_STATUS.SUBMITTED,
       rawWeightedScore: "4.000",
       submittedAt: new Date(),
     })
@@ -470,7 +472,7 @@ async function main() {
       eventId: event.id,
       judgeUserId: checkerJudgeB.id,
       submissionId: otherSubmissionId,
-      status: "completed",
+      status: JUDGE_ASSIGNMENT_STATUS.COMPLETED,
       assignedByUserId: organizer.id,
     })
     .returning();
@@ -479,7 +481,7 @@ async function main() {
     .values({
       judgeAssignmentId: judgeBAssignment.id,
       rubricId: rubric.id,
-      status: "submitted",
+      status: SCORE_STATUS.SUBMITTED,
       rawWeightedScore: "3.000",
       submittedAt: new Date(),
     })

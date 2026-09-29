@@ -30,7 +30,13 @@ export class JudgesService {
   // Delegates to EventRoleInvitesService (role="judge" fixed), the same
   // pending-invite state machine co-organizer invites use.
   invite(eventId: string, invitedByUserId: string, input: InviteJudgeInput) {
-    return this.invites.invite(eventId, invitedByUserId, "judge", input.email, input.trackIds);
+    return this.invites.invite(
+      eventId,
+      invitedByUserId,
+      EVENT_ROLE.JUDGE,
+      input.email,
+      input.trackIds,
+    );
   }
 
   acceptInvite(eventId: string, inviteId: string, currentUserId: string) {
@@ -42,7 +48,7 @@ export class JudgesService {
   }
 
   listForEvent(eventId: string): Promise<EventRoleListEntry[]> {
-    return this.invites.listForEvent(eventId, "judge");
+    return this.invites.listForEvent(eventId, EVENT_ROLE.JUDGE);
   }
 
   // The organizer judging their own event: clicking this on their own

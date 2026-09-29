@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 
+import { WEBHOOK_DELIVERY_STATUS } from "@hackpulse/shared";
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Inject } from "@nestjs/common";
 import type { Job } from "bullmq";
@@ -8,7 +9,6 @@ import { eq, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { webhookDeliveries, webhooks } from "../db/schema";
 import { DB } from "../db/tokens";
-
 interface DeliverJobData {
   deliveryId: string;
 }
@@ -63,7 +63,7 @@ export class WebhookProcessor extends WorkerHost {
       await this.db
         .update(webhookDeliveries)
         .set({
-          status: ok ? "succeeded" : "failed",
+          status: ok ? WEBHOOK_DELIVERY_STATUS.SUCCEEDED : WEBHOOK_DELIVERY_STATUS.FAILED,
           attemptCount: sql`${webhookDeliveries.attemptCount} + 1`,
           lastAttemptAt: new Date(),
           responseCode,

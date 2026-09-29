@@ -1,6 +1,10 @@
 import { randomBytes } from "node:crypto";
 
-import type { RegisterWebhookInput, WebhookEventType } from "@hackpulse/shared";
+import {
+  type RegisterWebhookInput,
+  WEBHOOK_DELIVERY_STATUS,
+  type WebhookEventType,
+} from "@hackpulse/shared";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Queue } from "bullmq";
@@ -54,7 +58,12 @@ export class WebhooksService {
 
       const [delivery] = await this.db
         .insert(webhookDeliveries)
-        .values({ webhookId: webhook.id, eventType, payload, status: "pending" })
+        .values({
+          webhookId: webhook.id,
+          eventType,
+          payload,
+          status: WEBHOOK_DELIVERY_STATUS.PENDING,
+        })
         .returning();
 
       await this.queue.add("deliver", { deliveryId: delivery.id }, DELIVERY_JOB_OPTS);

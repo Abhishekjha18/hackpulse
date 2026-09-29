@@ -1,3 +1,10 @@
+// Delivery attempt states for a webhook call. Keys are alphabetical.
+export const WEBHOOK_DELIVERY_STATUS = {
+  FAILED: "failed",
+  PENDING: "pending",
+  SUCCEEDED: "succeeded",
+} as const;
+
 // Event names delivered to registered webhooks (WebhooksService.trigger).
 // Keys are alphabetical.
 export const WEBHOOK_EVENT = {

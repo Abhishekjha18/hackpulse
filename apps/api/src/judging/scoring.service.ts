@@ -148,7 +148,7 @@ export class ScoringService {
           .values({
             judgeAssignmentId: assignmentId,
             rubricId: rubric.id,
-            status: "draft",
+            status: SCORE_STATUS.DRAFT,
             overallFeedback: input.overallFeedback ?? null,
           })
           .returning();
@@ -293,7 +293,7 @@ export class ScoringService {
       const rows = await tx
         .update(scores)
         .set({
-          status: "submitted",
+          status: SCORE_STATUS.SUBMITTED,
           rawWeightedScore: rawWeighted.toString(),
           submittedAt: new Date(),
           updatedAt: new Date(),

@@ -26,13 +26,13 @@ export class OrganizersController {
     @Body(new ZodValidationPipe(InviteCoOrganizerInput)) body: InviteCoOrganizerInput,
     @CurrentUser() user: CurrentUserType,
   ) {
-    return this.invites.invite(eventId, user.id, "organizer", body.email, []);
+    return this.invites.invite(eventId, user.id, EVENT_ROLE.ORGANIZER, body.email, []);
   }
 
   @Get("events/:eventId/organizers")
   @Roles(EVENT_ROLE.ORGANIZER)
   list(@Param("eventId") eventId: string) {
-    return this.invites.listForEvent(eventId, "organizer");
+    return this.invites.listForEvent(eventId, EVENT_ROLE.ORGANIZER);
   }
 
   // Not @Roles()-guarded, same reasoning as judge-invite accept/decline:

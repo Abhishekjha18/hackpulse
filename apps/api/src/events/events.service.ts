@@ -7,6 +7,7 @@ import {
   EVENT_STATUS,
   type EventStatus,
   JUDGE_ASSIGNMENT_STATUS,
+  LIFECYCLE_MODE,
   SUBMISSION_STATUS,
   type UpdateEventInput,
 } from "@hackpulse/shared";
@@ -133,15 +134,15 @@ export function computeDisplayStatus(event: {
   const judgingOpenAt = event.judgingOpenAt!;
   const now = Date.now();
   if (event.status === EVENT_STATUS.DRAFT && now < event.registrationOpenAt!.getTime()) {
-    return "draft";
+    return EVENT_STATUS.DRAFT;
   }
   if (now >= judgingOpenAt.getTime()) {
-    return "judging";
+    return EVENT_STATUS.JUDGING;
   }
   if (now >= submissionOpenAt.getTime()) {
-    return "submissions_open";
+    return EVENT_STATUS.SUBMISSIONS_OPEN;
   }
-  return "registration_open";
+  return EVENT_STATUS.REGISTRATION_OPEN;
 }
 
 // FR-EVT-05/06 — one shared definition of "is this event actually public"
@@ -300,7 +301,7 @@ async function assertValidStatusTransition(
       },
     });
   }
-  if (requestedStatus === "results_published") {
+  if (requestedStatus === EVENT_STATUS.RESULTS_PUBLISHED) {
     throw new ConflictException({
       error: {
         code: ERROR_CODE.USE_PUBLISH_ENDPOINT,
@@ -308,7 +309,7 @@ async function assertValidStatusTransition(
       },
     });
   }
-  if (requestedStatus === "archived") {
+  if (requestedStatus === EVENT_STATUS.ARCHIVED) {
     if (existing.status !== EVENT_STATUS.RESULTS_PUBLISHED) {
       throw new ConflictException({
         error: {
@@ -319,7 +320,7 @@ async function assertValidStatusTransition(
     }
     return;
   }
-  if (lifecycleModeOf(existing) === "automatic") {
+  if (lifecycleModeOf(existing) === LIFECYCLE_MODE.AUTOMATIC) {
     // The one deliberate escape from draft: displayStatus already tracks
     // the configured dates automatically, but visibility gates on the
     // *stored* status (FR-EVT-05), and "make this event public" has to
@@ -329,9 +330,13 @@ async function assertValidStatusTransition(
     // to the actually-correct one on the very next read regardless.
     const isMakingPublic =
       existing.status === EVENT_STATUS.DRAFT &&
-      (["registration_open", "submissions_open", "judging"] as EventStatus[]).includes(
-        requestedStatus,
-      );
+      (
+        [
+          EVENT_STATUS.REGISTRATION_OPEN,
+          EVENT_STATUS.SUBMISSIONS_OPEN,
+          EVENT_STATUS.JUDGING,
+        ] as EventStatus[]
+      ).includes(requestedStatus);
     if (isMakingPublic) {
       return;
     }
@@ -457,7 +462,7 @@ export class EventsService {
         .insert(events)
         .values({
           ...withParsedDates(input),
-          status: "draft",
+          status: EVENT_STATUS.DRAFT,
           ownerUserId,
         } as typeof events.$inferInsert)
         .returning();
@@ -711,7 +716,7 @@ export class EventsService {
           },
         });
       }
-      if (existingMode === "automatic" && !wouldGoAutomatic) {
+      if (existingMode === LIFECYCLE_MODE.AUTOMATIC && !wouldGoAutomatic) {
         throw new ConflictException({
           error: {
             code: ERROR_CODE.LIFECYCLE_MODE_LOCKED,
@@ -722,7 +727,7 @@ export class EventsService {
       }
     }
 
-    if (existingMode === "automatic") {
+    if (existingMode === LIFECYCLE_MODE.AUTOMATIC) {
       // Safe to assert non-null throughout this branch: automatic mode
       // guarantees all six are set (DB check constraint).
       const existingDates = Object.fromEntries(

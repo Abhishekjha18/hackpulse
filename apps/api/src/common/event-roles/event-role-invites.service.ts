@@ -1,8 +1,10 @@
 import {
   AUDIT_ACTION,
   ERROR_CODE,
+  EVENT_ROLE,
   type EventRole,
   type EventRoleListEntry,
+  INVITE_STATUS,
   type MyEventInvite,
 } from "@hackpulse/shared";
 import {
@@ -65,7 +67,7 @@ export class EventRoleInvitesService {
       });
     }
 
-    if (role === "judge" && trackIds.length > 0) {
+    if (role === EVENT_ROLE.JUDGE && trackIds.length > 0) {
       const validTracks = await this.db
         .select({ id: tracks.id })
         .from(tracks)
@@ -96,7 +98,7 @@ export class EventRoleInvitesService {
       // an organizer (trackIds always empty) it's a harmless no-op instead
       // of an error.
       await this.judgeTrackScope.addTrackScopes(existingRole.id, trackIds);
-      return { status: "accepted" as const, userId: invitee.id, eventRoleId: existingRole.id };
+      return { status: INVITE_STATUS.ACCEPTED, userId: invitee.id, eventRoleId: existingRole.id };
     }
 
     const [existingInvite] = await this.db
@@ -112,17 +114,17 @@ export class EventRoleInvitesService {
     if (existingInvite) {
       const [updated] = await this.db
         .update(eventInvites)
-        .set({ trackIds, status: "pending", respondedAt: null, invitedByUserId })
+        .set({ trackIds, status: INVITE_STATUS.PENDING, respondedAt: null, invitedByUserId })
         .where(eq(eventInvites.id, existingInvite.id))
         .returning();
-      return { status: "pending" as const, inviteId: updated.id, userId: invitee.id };
+      return { status: INVITE_STATUS.PENDING, inviteId: updated.id, userId: invitee.id };
     }
 
     const [created] = await this.db
       .insert(eventInvites)
       .values({ eventId, inviteeUserId: invitee.id, invitedByUserId, role, trackIds })
       .returning();
-    return { status: "pending" as const, inviteId: created.id, userId: invitee.id };
+    return { status: INVITE_STATUS.PENDING, inviteId: created.id, userId: invitee.id };
   }
 
   private async loadInviteForResponse(eventId: string, inviteId: string, currentUserId: string) {
@@ -136,7 +138,7 @@ export class EventRoleInvitesService {
     if (invite.inviteeUserId !== currentUserId) {
       throw new ForbiddenException();
     }
-    if (invite.status !== "pending") {
+    if (invite.status !== INVITE_STATUS.PENDING) {
       throw new ConflictException({
         error: {
           code: ERROR_CODE.ALREADY_RESOLVED,
@@ -200,7 +202,7 @@ export class EventRoleInvitesService {
         }
         await tx
           .update(eventInvites)
-          .set({ status: "accepted", respondedAt: new Date() })
+          .set({ status: INVITE_STATUS.ACCEPTED, respondedAt: new Date() })
           .where(eq(eventInvites.id, inviteId));
 
         return { eventRoleId: role.id };
@@ -226,7 +228,7 @@ export class EventRoleInvitesService {
     await this.loadInviteForResponse(eventId, inviteId, currentUserId);
     await this.db
       .update(eventInvites)
-      .set({ status: "declined", respondedAt: new Date() })
+      .set({ status: INVITE_STATUS.DECLINED, respondedAt: new Date() })
       .where(eq(eventInvites.id, inviteId));
   }
 
@@ -244,7 +246,9 @@ export class EventRoleInvitesService {
       })
       .from(eventInvites)
       .innerJoin(events, eq(events.id, eventInvites.eventId))
-      .where(and(eq(eventInvites.inviteeUserId, userId), eq(eventInvites.status, "pending")));
+      .where(
+        and(eq(eventInvites.inviteeUserId, userId), eq(eventInvites.status, INVITE_STATUS.PENDING)),
+      );
 
     return Promise.all(
       invites.map(async (inv) => {
@@ -299,7 +303,7 @@ export class EventRoleInvitesService {
           name: r.name,
           email: r.email,
           role,
-          status: "accepted" as const,
+          status: INVITE_STATUS.ACCEPTED,
           tracks: scopedTracks,
         };
       }),
@@ -320,7 +324,7 @@ export class EventRoleInvitesService {
         and(
           eq(eventInvites.eventId, eventId),
           eq(eventInvites.role, role),
-          inArray(eventInvites.status, ["pending", "declined"]),
+          inArray(eventInvites.status, [INVITE_STATUS.PENDING, INVITE_STATUS.DECLINED]),
         ),
       );
 

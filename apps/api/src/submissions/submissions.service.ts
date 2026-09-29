@@ -250,7 +250,7 @@ export class SubmissionsService {
     try {
       const [submission] = await this.db
         .insert(submissions)
-        .values({ ...input, teamId: team.id, status: "draft", contentHash })
+        .values({ ...input, teamId: team.id, status: SUBMISSION_STATUS.DRAFT, contentHash })
         .returning();
 
       return submission;
@@ -323,7 +323,7 @@ export class SubmissionsService {
   // (clearing submittedAt) rather than being blocked outright, so "submit"
   // stays a deliberate, explicit re-lock action and a judge is never
   // looking at a half-edited entry (assignment/algorithmic eligibility
-  // only ever considers status: "submitted" — see
+  // only ever considers status: SUBMISSION_STATUS.SUBMITTED — see
   // assignments.service.ts#createAlgorithmic). Only the deadline itself
   // is rejected server-side, per the client clock never being trusted.
   async update(submissionId: string, input: UpdateSubmissionInput, currentUser: CurrentUser) {
@@ -359,7 +359,7 @@ export class SubmissionsService {
         .set({
           ...input,
           ...(contentHash ? { contentHash } : {}),
-          ...(wasSubmitted ? { status: "draft" as const, submittedAt: null } : {}),
+          ...(wasSubmitted ? { status: SUBMISSION_STATUS.DRAFT, submittedAt: null } : {}),
           updatedAt: new Date(),
         })
         .where(eq(submissions.id, submissionId))
@@ -423,7 +423,7 @@ export class SubmissionsService {
 
     const [updated] = await this.db
       .update(submissions)
-      .set({ status: "submitted", submittedAt: new Date(), updatedAt: new Date() })
+      .set({ status: SUBMISSION_STATUS.SUBMITTED, submittedAt: new Date(), updatedAt: new Date() })
       .where(eq(submissions.id, submissionId))
       .returning();
 

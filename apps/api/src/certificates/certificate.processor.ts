@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { WEBHOOK_EVENT } from "@hackpulse/shared";
+import { CERTIFICATE_TYPE, WEBHOOK_EVENT } from "@hackpulse/shared";
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Inject } from "@nestjs/common";
 import type { Job } from "bullmq";
@@ -46,7 +46,7 @@ export class CertificateProcessor extends WorkerHost {
     const [recipient] = await this.db.select().from(user).where(eq(user.id, cert.recipientUserId));
 
     let verifyUrl: string | undefined;
-    if (cert.type === "judge") {
+    if (cert.type === CERTIFICATE_TYPE.JUDGE) {
       const record = await this.certificatesService.issueJudgeRecord(
         cert.eventId,
         cert.recipientUserId,
@@ -72,7 +72,7 @@ export class CertificateProcessor extends WorkerHost {
       .set({ pdfObjectKey: filename })
       .where(eq(certificates.id, cert.id));
 
-    if (cert.type !== "judge") {
+    if (cert.type !== CERTIFICATE_TYPE.JUDGE) {
       // judge-type already fired certificate.issued from issueJudgeRecord
       await this.webhooks.trigger(cert.eventId, WEBHOOK_EVENT.CERTIFICATE_ISSUED, {
         certificateId: cert.id,

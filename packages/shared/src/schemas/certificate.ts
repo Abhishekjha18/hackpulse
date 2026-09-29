@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-export const CertificateType = z.enum(["participation", "winner", "judge"]);
+import { CERTIFICATE_TYPE } from "../constants";
+
+export const CertificateType = z.enum([
+  CERTIFICATE_TYPE.PARTICIPATION,
+  CERTIFICATE_TYPE.WINNER,
+  CERTIFICATE_TYPE.JUDGE,
+]);
 export type CertificateType = z.infer<typeof CertificateType>;
 
 // FR-CERT-01
