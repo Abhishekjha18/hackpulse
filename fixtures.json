@@ -2,7 +2,7 @@
   "event": {
     "id": "evt_01",
     "name": "Sample Hack 2026",
-    "submissions_close": "2026-03-01T18:00:00Z"
+    "submissions_close": "2026-09-28T18:00:00Z"
   },
   "tracks": [
     {
@@ -630,7 +630,7 @@
       "title": "Glass Signal",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/01",
-      "submitted_at": "2026-02-27T04:08:00Z"
+      "submitted_at": "2026-09-27T09:14:00Z"
     },
     {
       "id": "prj_02",
@@ -639,7 +639,7 @@
       "title": "Small Meadow",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/02",
-      "submitted_at": "2026-02-27T20:06:00Z"
+      "submitted_at": "2026-09-27T17:42:00Z"
     },
     {
       "id": "prj_03",
@@ -648,7 +648,7 @@
       "title": "Deep Compass",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/03",
-      "submitted_at": "2026-02-28T16:58:00Z"
+      "submitted_at": "2026-09-28T04:44:00Z"
     },
     {
       "id": "prj_04",
@@ -657,7 +657,7 @@
       "title": "Green Switch",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/04",
-      "submitted_at": "2026-02-27T17:00:00Z"
+      "submitted_at": "2026-09-27T16:03:00Z"
     },
     {
       "id": "prj_05",
@@ -666,7 +666,7 @@
       "title": "North Compass",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/05",
-      "submitted_at": "2026-02-27T04:40:00Z"
+      "submitted_at": "2026-09-27T09:31:00Z"
     },
     {
       "id": "prj_06",
@@ -675,7 +675,7 @@
       "title": "Dry Compass",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/06",
-      "submitted_at": "2026-03-01T10:24:00Z"
+      "submitted_at": "2026-09-28T13:58:00Z"
     },
     {
       "id": "prj_07",
@@ -684,7 +684,7 @@
       "title": "Dry Harbour",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/07",
-      "submitted_at": "2026-03-01T04:29:00Z"
+      "submitted_at": "2026-09-28T10:50:00Z"
     },
     {
       "id": "prj_08",
@@ -693,7 +693,7 @@
       "title": "North Drift",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/08",
-      "submitted_at": "2026-03-01T01:09:00Z"
+      "submitted_at": "2026-09-28T09:04:00Z"
     },
     {
       "id": "prj_09",
@@ -702,7 +702,7 @@
       "title": "Hollow Signal",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/09",
-      "submitted_at": "2026-03-01T15:47:00Z"
+      "submitted_at": "2026-09-28T16:49:00Z"
     },
     {
       "id": "prj_10",
@@ -711,7 +711,7 @@
       "title": "Still Beacon",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/10",
-      "submitted_at": "2026-03-01T05:44:00Z"
+      "submitted_at": "2026-09-28T11:30:00Z"
     },
     {
       "id": "prj_11",
@@ -720,7 +720,7 @@
       "title": "Salt Ledger",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/11",
-      "submitted_at": "2026-02-28T13:14:00Z"
+      "submitted_at": "2026-09-28T02:46:00Z"
     },
     {
       "id": "prj_12",
@@ -729,7 +729,7 @@
       "title": "Open Beacon",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/12",
-      "submitted_at": "2026-02-28T09:46:00Z"
+      "submitted_at": "2026-09-28T00:56:00Z"
     },
     {
       "id": "prj_13",
@@ -738,7 +738,7 @@
       "title": "Quiet Anchor",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/13",
-      "submitted_at": "2026-03-01T14:20:00Z"
+      "submitted_at": "2026-09-28T16:03:00Z"
     },
     {
       "id": "prj_14",
@@ -747,7 +747,7 @@
       "title": "Green Lantern",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/14",
-      "submitted_at": "2026-02-27T10:21:00Z"
+      "submitted_at": "2026-09-27T12:32:00Z"
     },
     {
       "id": "prj_15",
@@ -756,7 +756,7 @@
       "title": "Copper Orbit",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/15",
-      "submitted_at": "2026-03-01T08:30:00Z"
+      "submitted_at": "2026-09-28T12:58:00Z"
     },
     {
       "id": "prj_16",
@@ -765,7 +765,7 @@
       "title": "Salt Kiln",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/16",
-      "submitted_at": "2026-02-28T14:00:00Z"
+      "submitted_at": "2026-09-28T03:10:00Z"
     },
     {
       "id": "prj_17",
@@ -774,7 +774,7 @@
       "title": "Small Loom",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/17",
-      "submitted_at": "2026-03-01T09:09:00Z"
+      "submitted_at": "2026-09-28T13:18:00Z"
     },
     {
       "id": "prj_18",
@@ -783,7 +783,7 @@
       "title": "Open Kiln",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/18",
-      "submitted_at": "2026-03-01T15:30:00Z"
+      "submitted_at": "2026-09-28T16:40:00Z"
     },
     {
       "id": "prj_19",
@@ -792,7 +792,7 @@
       "title": "Small Relay",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/19",
-      "submitted_at": "2026-02-27T09:30:00Z"
+      "submitted_at": "2026-09-27T12:05:00Z"
     },
     {
       "id": "prj_20",
@@ -801,7 +801,7 @@
       "title": "Paper Thread",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/20",
-      "submitted_at": "2026-02-27T05:18:00Z"
+      "submitted_at": "2026-09-27T09:51:00Z"
     },
     {
       "id": "prj_21",
@@ -810,7 +810,7 @@
       "title": "Copper Kiln",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/21",
-      "submitted_at": "2026-02-28T01:03:00Z"
+      "submitted_at": "2026-09-27T20:19:00Z"
     },
     {
       "id": "prj_22",
@@ -819,7 +819,7 @@
       "title": "Dry Bridge",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/22",
-      "submitted_at": "2026-03-01T07:47:00Z"
+      "submitted_at": "2026-09-28T12:35:00Z"
     },
     {
       "id": "prj_23",
@@ -828,7 +828,7 @@
       "title": "Slow Quarry",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/23",
-      "submitted_at": "2026-03-01T10:30:00Z"
+      "submitted_at": "2026-09-28T14:01:00Z"
     },
     {
       "id": "prj_24",
@@ -837,7 +837,7 @@
       "title": "Glass Beacon",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/24",
-      "submitted_at": "2026-02-28T17:09:00Z"
+      "submitted_at": "2026-09-28T04:50:00Z"
     },
     {
       "id": "prj_25",
@@ -846,7 +846,7 @@
       "title": "Dry Relay",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/25",
-      "submitted_at": "2026-02-28T22:36:00Z"
+      "submitted_at": "2026-09-28T07:43:00Z"
     },
     {
       "id": "prj_26",
@@ -855,7 +855,7 @@
       "title": "Amber Hours",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/26",
-      "submitted_at": "2026-02-27T03:56:00Z"
+      "submitted_at": "2026-09-27T09:08:00Z"
     },
     {
       "id": "prj_27",
@@ -864,7 +864,7 @@
       "title": "Flat Thread",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/27",
-      "submitted_at": "2026-02-28T10:34:00Z"
+      "submitted_at": "2026-09-28T01:21:00Z"
     },
     {
       "id": "prj_28",
@@ -873,7 +873,7 @@
       "title": "Flat Meadow",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/28",
-      "submitted_at": "2026-03-01T10:22:00Z"
+      "submitted_at": "2026-09-28T13:57:00Z"
     },
     {
       "id": "prj_29",
@@ -882,7 +882,7 @@
       "title": "Flat Relay",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/29",
-      "submitted_at": "2026-02-28T20:34:00Z"
+      "submitted_at": "2026-09-28T06:39:00Z"
     },
     {
       "id": "prj_30",
@@ -891,7 +891,7 @@
       "title": "Paper Harbour",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/30",
-      "submitted_at": "2026-03-01T13:45:00Z"
+      "submitted_at": "2026-09-28T15:45:00Z"
     },
     {
       "id": "prj_31",
@@ -900,7 +900,7 @@
       "title": "Salt Ferry",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/31",
-      "submitted_at": "2026-03-01T05:43:00Z"
+      "submitted_at": "2026-09-28T11:29:00Z"
     },
     {
       "id": "prj_32",
@@ -909,7 +909,7 @@
       "title": "Loud Ledger",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/32",
-      "submitted_at": "2026-03-01T14:58:00Z"
+      "submitted_at": "2026-09-28T16:23:00Z"
     },
     {
       "id": "prj_33",
@@ -918,7 +918,7 @@
       "title": "Slow Trail",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/33",
-      "submitted_at": "2026-02-27T20:51:00Z"
+      "submitted_at": "2026-09-27T18:05:00Z"
     },
     {
       "id": "prj_34",
@@ -927,7 +927,7 @@
       "title": "Iron Switch",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/34",
-      "submitted_at": "2026-02-28T01:13:00Z"
+      "submitted_at": "2026-09-27T20:24:00Z"
     },
     {
       "id": "prj_35",
@@ -936,7 +936,7 @@
       "title": "Warm Beacon",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/35",
-      "submitted_at": "2026-02-27T09:33:00Z"
+      "submitted_at": "2026-09-27T12:06:00Z"
     },
     {
       "id": "prj_36",
@@ -945,7 +945,7 @@
       "title": "Salt Drift",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/36",
-      "submitted_at": "2026-02-27T01:20:00Z"
+      "submitted_at": "2026-09-27T07:45:00Z"
     },
     {
       "id": "prj_37",
@@ -954,7 +954,7 @@
       "title": "Salt Loom",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/37",
-      "submitted_at": "2026-02-27T21:42:00Z"
+      "submitted_at": "2026-09-27T18:32:00Z"
     },
     {
       "id": "prj_38",
@@ -963,7 +963,7 @@
       "title": "Deep Beacon",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/38",
-      "submitted_at": "2026-02-27T03:39:00Z"
+      "submitted_at": "2026-09-27T08:59:00Z"
     },
     {
       "id": "prj_39",
@@ -972,7 +972,7 @@
       "title": "Paper Anchor",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/39",
-      "submitted_at": "2026-02-26T23:30:00Z"
+      "submitted_at": "2026-09-27T06:47:00Z"
     },
     {
       "id": "prj_40",
@@ -981,7 +981,7 @@
       "title": "Slow Loom",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/40",
-      "submitted_at": "2026-02-28T15:26:00Z"
+      "submitted_at": "2026-09-28T03:56:00Z"
     },
     {
       "id": "prj_41",
@@ -990,7 +990,7 @@
       "title": "Dry Harbour",
       "summary": "One line of what it does.",
       "repo_url": "https://example.org/repo/07",
-      "submitted_at": "2026-03-01T17:57:00Z"
+      "submitted_at": "2026-09-28T17:58:00Z"
     }
   ],
   "scores": [

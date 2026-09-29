@@ -15,7 +15,7 @@ The executable contract lives in `docs/openapi.yaml` (OpenAPI 3.0, auto-generate
 - **Pagination**: cursor-based on list endpoints: `?limit=50&cursor=...`, response includes `nextCursor: string | null`. Chosen over offset pagination because audit-log and score lists are append-heavy and offset pagination drifts under concurrent writes.
 - **Rate limiting**: `429` with `Retry-After`; limits vary per endpoint class (auth, voting, comments; see FR-ABUSE-01) and are documented per-operation in the spec via the `x-rate-limit` extension.
 - **Idempotency**: webhook delivery and bulk-import row processing accept an `Idempotency-Key` header; replays with the same key return the original result rather than reprocessing.
-- **Timestamps**: always ISO-8601 UTC on the wire (`2026-09-25T18:29:00Z`); the client localizes for display (NFR-UX-01).
+- **Timestamps**: always ISO-8601 UTC on the wire (`2026-09-27T18:29:00Z`); the client localizes for display (NFR-UX-01).
 
 ## 2. Route Map
 

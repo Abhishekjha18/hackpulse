@@ -14,13 +14,13 @@ describe("annotateRevisions", () => {
       {
         id: "r1",
         scoreId: "s1",
-        createdAt: new Date("2026-01-01T10:00:00Z"),
+        createdAt: new Date("2026-09-27T10:00:00Z"),
         snapshot: snap("1.700", { a: "1.00" }),
       },
       {
         id: "r2",
         scoreId: "s1",
-        createdAt: new Date("2026-01-01T11:00:00Z"),
+        createdAt: new Date("2026-09-27T11:00:00Z"),
         snapshot: snap("2.500", { a: "5.00" }),
       },
     ];
@@ -36,7 +36,7 @@ describe("annotateRevisions", () => {
       {
         id: "r1",
         scoreId: "s1",
-        createdAt: new Date("2026-01-01T10:00:00Z"),
+        createdAt: new Date("2026-09-27T10:00:00Z"),
         snapshot: snap("2.000", { a: "2.00", b: "2.00" }),
       },
     ];
@@ -53,13 +53,13 @@ describe("annotateRevisions", () => {
       {
         id: "x",
         scoreId: "s1",
-        createdAt: new Date("2026-01-01T10:00:00Z"),
+        createdAt: new Date("2026-09-27T10:00:00Z"),
         snapshot: snap("1.000", {}),
       },
       {
         id: "y",
         scoreId: "s2",
-        createdAt: new Date("2026-01-01T10:30:00Z"),
+        createdAt: new Date("2026-09-27T10:30:00Z"),
         snapshot: snap("4.000", {}),
       },
     ];

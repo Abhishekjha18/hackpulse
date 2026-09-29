@@ -223,14 +223,14 @@ async function main() {
         "Loaded verbatim from the shared fixture data every reviewer's copy of this portal holds.",
       ownerUserId: organizer.id,
       timezone: "UTC",
-      registrationOpenAt: new Date("2026-08-05T00:00:00Z"),
-      registrationCloseAt: new Date("2026-09-05T00:00:00Z"),
-      submissionOpenAt: new Date("2026-09-05T00:00:00Z"),
+      registrationOpenAt: new Date("2026-09-27T00:00:00Z"),
+      registrationCloseAt: new Date("2026-09-27T06:00:00Z"),
+      submissionOpenAt: new Date("2026-09-27T06:00:00Z"),
       // The one date that has to be the fixture's own value, not a
       // computed one: the "closed event refuses submissions" check
       // relies on this already being in the past.
       submissionCloseAt: new Date(fixture.event.submissions_close),
-      judgingOpenAt: new Date("2026-09-20T00:00:00Z"),
+      judgingOpenAt: new Date("2026-09-28T20:00:00Z"),
       judgingCloseAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
       status: EVENT_STATUS.JUDGING,
       galleryVisibility: GALLERY_VISIBILITY.OPEN,
