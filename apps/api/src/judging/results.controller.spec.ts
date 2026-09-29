@@ -3,6 +3,11 @@ import { NotFoundException } from "@nestjs/common";
 import type { NormalizationService } from "./normalization.service";
 import { ResultsController } from "./results.controller";
 import type { RubricsService } from "./rubrics.service";
+import type { ScoringService } from "./scoring.service";
+
+// ScoringService transitively imports better-auth (ESM), which jest does not
+// transform; only the class token is needed here.
+jest.mock("./scoring.service", () => ({ ScoringService: class ScoringService {} }));
 
 // F3 regression (found live): @Roles("organizer") only proves the caller
 // organizes the event in the URL. An organizer of event B could pass event
@@ -28,6 +33,7 @@ describe("ResultsController rubric scoping", () => {
   const controller = new ResultsController(
     normalization as unknown as NormalizationService,
     rubrics as unknown as RubricsService,
+    { listRevisions: jest.fn().mockResolvedValue([]) } as unknown as ScoringService,
   );
 
   beforeEach(() => jest.clearAllMocks());

@@ -6,7 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 import { AuditService } from "../audit/audit.service";
 import type { Database } from "../db/client";
@@ -18,12 +18,14 @@ import {
   scoreRevisions,
   scores,
   submissions,
+  user,
 } from "../db/schema";
 import { DB } from "../db/tokens";
 import { WebhooksService } from "../webhooks/webhooks.service";
 import { assertJudgingWindowOpen } from "./judging-window.util";
 import { NormalizationService } from "./normalization.service";
 import { findDuplicateCriterionId, weightedRawScore } from "./raw-score.util";
+import { annotateRevisions } from "./revision-history.util";
 
 @Injectable()
 export class ScoringService {
@@ -200,7 +202,15 @@ export class ScoringService {
         action: "score.edit",
         resourceType: "score",
         resourceId: result.id,
-        metadata: { assignmentId, submissionId: assignment.submissionId },
+        // Old and new raw score are recorded so an organizer reading the
+        // audit log sees *what* changed, not only that something did (F7).
+        metadata: {
+          assignmentId,
+          submissionId: assignment.submissionId,
+          rawScoreBefore:
+            existing.rawWeightedScore === null ? null : Number(existing.rawWeightedScore),
+          rawScoreAfter: result.rawWeightedScore === null ? null : Number(result.rawWeightedScore),
+        },
       });
     }
 
@@ -320,6 +330,77 @@ export class ScoringService {
     await this.webhooks.trigger(assignment.eventId, "judging.completed", {
       submissionId: assignment.submissionId,
       judgeCount: siblings.length,
+    });
+  }
+
+  // F7: every post-submit edit stores the pre-edit snapshot in
+  // score_revisions, but nothing used to read it back. Organizer-only (the
+  // route is @Roles("organizer")): lists each revision with who edited it,
+  // for which judge and submission, and the raw score before and after.
+  async listRevisions(eventId: string) {
+    const rows = await this.db
+      .select({
+        id: scoreRevisions.id,
+        scoreId: scoreRevisions.scoreId,
+        createdAt: scoreRevisions.createdAt,
+        snapshot: scoreRevisions.snapshot,
+        revisedByUserId: scoreRevisions.revisedByUserId,
+        judgeUserId: judgeAssignments.judgeUserId,
+        submissionId: judgeAssignments.submissionId,
+        submissionName: submissions.name,
+      })
+      .from(scoreRevisions)
+      .innerJoin(scores, eq(scores.id, scoreRevisions.scoreId))
+      .innerJoin(judgeAssignments, eq(judgeAssignments.id, scores.judgeAssignmentId))
+      .innerJoin(submissions, eq(submissions.id, judgeAssignments.submissionId))
+      .where(eq(judgeAssignments.eventId, eventId));
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const scoreIds = [...new Set(rows.map((r) => r.scoreId))];
+    const current = await this.db.select().from(scores).where(inArray(scores.id, scoreIds));
+    const currentValues = await this.db
+      .select()
+      .from(criterionScores)
+      .where(inArray(criterionScores.scoreId, scoreIds));
+    const valuesByScore = new Map<string, Record<string, string>>();
+    for (const v of currentValues) {
+      valuesByScore.set(v.scoreId, {
+        ...(valuesByScore.get(v.scoreId) ?? {}),
+        [v.rubricCriterionId]: v.value,
+      });
+    }
+
+    const annotated = annotateRevisions(
+      rows,
+      new Map(current.map((c) => [c.id, c.rawWeightedScore])),
+      valuesByScore,
+    );
+
+    const userIds = [...new Set(rows.flatMap((r) => [r.judgeUserId, r.revisedByUserId]))];
+    const names = await this.db
+      .select({ id: user.id, name: user.name })
+      .from(user)
+      .where(inArray(user.id, userIds));
+    const nameById = new Map(names.map((n) => [n.id, n.name]));
+    const rowById = new Map(rows.map((r) => [r.id, r]));
+
+    return annotated.map((a) => {
+      const r = rowById.get(a.id)!;
+      return {
+        ...a,
+        submissionId: r.submissionId,
+        submissionName: r.submissionName,
+        judgeUserId: r.judgeUserId,
+        judgeName: nameById.get(r.judgeUserId) ?? r.judgeUserId,
+        revisedByUserId: r.revisedByUserId,
+        revisedByName: nameById.get(r.revisedByUserId) ?? r.revisedByUserId,
+        // Edited by someone other than the judge whose score it is:
+        // surfaced explicitly since it is exactly what an integrity review
+        // looks for.
+        editedByNonOwner: r.revisedByUserId !== r.judgeUserId,
+      };
     });
   }
 
