@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { INVITE_STATUS } from "../constants";
 import { EventRole } from "./user";
 
 // FR-JASSIGN-01
@@ -9,7 +10,11 @@ export const InviteJudgeInput = z.object({
 });
 export type InviteJudgeInput = z.infer<typeof InviteJudgeInput>;
 
-export const JudgeInviteStatus = z.enum(["pending", "accepted", "declined"]);
+export const JudgeInviteStatus = z.enum([
+  INVITE_STATUS.PENDING,
+  INVITE_STATUS.ACCEPTED,
+  INVITE_STATUS.DECLINED,
+]);
 export type JudgeInviteStatus = z.infer<typeof JudgeInviteStatus>;
 
 // POST /events/:eventId/judges/self: an organizer judging their own event.

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-export const EventRole = z.enum(["organizer", "judge"]);
+import { EVENT_ROLE } from "../constants";
+export const EventRole = z.enum([EVENT_ROLE.ORGANIZER, EVENT_ROLE.JUDGE]);
 export type EventRole = z.infer<typeof EventRole>;
 
 export const User = z.object({

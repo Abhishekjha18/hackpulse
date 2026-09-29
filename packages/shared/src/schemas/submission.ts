@@ -1,8 +1,9 @@
 import { z } from "zod";
 
 import { httpUrl } from "../common";
+import { SUBMISSION_STATUS } from "../constants";
 
-export const SubmissionStatus = z.enum(["draft", "submitted"]);
+export const SubmissionStatus = z.enum([SUBMISSION_STATUS.DRAFT, SUBMISSION_STATUS.SUBMITTED]);
 export type SubmissionStatus = z.infer<typeof SubmissionStatus>;
 
 // FR-SUB: the stable submission field set (name, tagline, long description,

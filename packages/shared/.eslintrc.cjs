@@ -6,6 +6,14 @@ module.exports = {
   root: true,
   env: { node: true },
   ignorePatterns: [".eslintrc.cjs", "dist"],
+  overrides: [
+    {
+      // Constants files keep their keys in alphabetical order so a constant
+      // is always found (and a duplicate always noticed) by scanning.
+      files: ["src/constants/**/*.ts"],
+      rules: { "sort-keys": ["error", "asc", { caseSensitive: true, natural: true }] },
+    },
+  ],
   rules: {
     "@typescript-eslint/no-unused-vars": "off",
     "unused-imports/no-unused-imports": "error",

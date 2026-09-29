@@ -1,10 +1,11 @@
 import { z } from "zod";
 
+import { WEBHOOK_EVENT } from "../constants";
 export const WebhookEventType = z.enum([
-  "submission.received",
-  "judging.completed",
-  "results.published",
-  "certificate.issued",
+  WEBHOOK_EVENT.SUBMISSION_RECEIVED,
+  WEBHOOK_EVENT.JUDGING_COMPLETED,
+  WEBHOOK_EVENT.RESULTS_PUBLISHED,
+  WEBHOOK_EVENT.CERTIFICATE_ISSUED,
 ]);
 export type WebhookEventType = z.infer<typeof WebhookEventType>;
 

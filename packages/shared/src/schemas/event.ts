@@ -1,21 +1,40 @@
 import { z } from "zod";
 
 import { httpUrl } from "../common";
+import {
+  EVENT_STATUS,
+  GALLERY_VISIBILITY,
+  SCORING_MODE,
+  VOTING_ACCESS,
+  VOTING_MODE,
+} from "../constants";
 
 export const EventStatus = z.enum([
-  "draft",
-  "registration_open",
-  "submissions_open",
-  "judging",
-  "results_published",
-  "archived",
+  EVENT_STATUS.DRAFT,
+  EVENT_STATUS.REGISTRATION_OPEN,
+  EVENT_STATUS.SUBMISSIONS_OPEN,
+  EVENT_STATUS.JUDGING,
+  EVENT_STATUS.RESULTS_PUBLISHED,
+  EVENT_STATUS.ARCHIVED,
 ]);
 export type EventStatus = z.infer<typeof EventStatus>;
 
-export const GalleryVisibility = z.enum(["open", "participants_only", "hidden"]);
-export const VotingMode = z.enum(["disabled", "single_vote", "quadratic"]);
-export const VotingAccess = z.enum(["open_link", "email_gated", "authenticated"]);
-export const ScoringMode = z.enum(["rubric", "pairwise"]);
+export const GalleryVisibility = z.enum([
+  GALLERY_VISIBILITY.OPEN,
+  GALLERY_VISIBILITY.PARTICIPANTS_ONLY,
+  GALLERY_VISIBILITY.HIDDEN,
+]);
+export const VotingMode = z.enum([
+  VOTING_MODE.DISABLED,
+  VOTING_MODE.SINGLE_VOTE,
+  VOTING_MODE.QUADRATIC,
+]);
+export const VotingAccess = z.enum([
+  VOTING_ACCESS.OPEN_LINK,
+  VOTING_ACCESS.EMAIL_GATED,
+  VOTING_ACCESS.AUTHENTICATED,
+]);
+export const ScoringMode = z.enum([SCORING_MODE.RUBRIC, SCORING_MODE.PAIRWISE]);
 
 export const Event = z.object({
   id: z.string().uuid(),

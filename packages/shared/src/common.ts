@@ -1,13 +1,15 @@
 import { z } from "zod";
 
+import { ERROR_CODE } from "./constants";
+
 export const ErrorCode = z.enum([
-  "UNAUTHENTICATED",
-  "FORBIDDEN",
-  "NOT_FOUND",
-  "VALIDATION_ERROR",
-  "DEADLINE_PASSED",
-  "CONFLICT",
-  "RATE_LIMITED",
+  ERROR_CODE.UNAUTHENTICATED,
+  ERROR_CODE.FORBIDDEN,
+  ERROR_CODE.NOT_FOUND,
+  ERROR_CODE.VALIDATION_ERROR,
+  ERROR_CODE.DEADLINE_PASSED,
+  ERROR_CODE.CONFLICT,
+  ERROR_CODE.RATE_LIMITED,
 ]);
 export type ErrorCode = z.infer<typeof ErrorCode>;
 
