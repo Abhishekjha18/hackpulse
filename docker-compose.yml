@@ -37,6 +37,10 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    # Always rebuild on `up` (layer cache still applies, so unchanged code is
+    # fast) so a plain `docker compose up` never reuses a stale image of the
+    # app code. Without this, `up` only builds when no image exists yet.
+    pull_policy: build
     restart: unless-stopped
     depends_on:
       postgres:
@@ -76,6 +80,10 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+    # Always rebuild on `up` (layer cache still applies, so unchanged code is
+    # fast) so a plain `docker compose up` never reuses a stale image of the
+    # app code. Without this, `up` only builds when no image exists yet.
+    pull_policy: build
     restart: unless-stopped
     depends_on:
       api:
