@@ -1,6 +1,7 @@
 "use client";
 
 import type { Event } from "@hackpulse/shared";
+import { EVENT_STATUS } from "@hackpulse/shared/constants";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -9,7 +10,6 @@ import { api } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { useTheme } from "../lib/theme-context";
 import { useInView } from "../lib/use-in-view";
-
 interface InstanceStats {
   eventCount: number;
   submissionCount: number;
@@ -281,9 +281,10 @@ export default function HomePage() {
                 <div className="p-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge status={event.displayStatus} />
-                    {event.displayStatus === "submissions_open" && event.submissionCloseAt && (
-                      <CountdownChip deadline={event.submissionCloseAt} />
-                    )}
+                    {event.displayStatus === EVENT_STATUS.SUBMISSIONS_OPEN &&
+                      event.submissionCloseAt && (
+                        <CountdownChip deadline={event.submissionCloseAt} />
+                      )}
                   </div>
                   <h3 className="mt-3 text-h3 font-semibold text-ink">{event.name}</h3>
                   <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted">

@@ -1,6 +1,7 @@
 "use client";
 
 import type { Event } from "@hackpulse/shared";
+import { EVENT_STATUS } from "@hackpulse/shared/constants";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -14,7 +15,6 @@ import {
 } from "../../components/ui";
 import { api, ApiError } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
-
 interface EventListItem extends Event {
   submissionCount: number;
   prizeNames: string[];
@@ -211,9 +211,8 @@ function EventsPageInner() {
                       </span>
                     )}
                   </div>
-                  {event.displayStatus === "submissions_open" && event.submissionCloseAt && (
-                    <CountdownChip deadline={event.submissionCloseAt} />
-                  )}
+                  {event.displayStatus === EVENT_STATUS.SUBMISSIONS_OPEN &&
+                    event.submissionCloseAt && <CountdownChip deadline={event.submissionCloseAt} />}
                 </div>
                 <h2 className="mt-3 text-h2 font-semibold text-ink">{event.name}</h2>
                 <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted">

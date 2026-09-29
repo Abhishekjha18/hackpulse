@@ -203,7 +203,7 @@ export default function EventPage() {
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={event.displayStatus} />
-            {event.displayStatus === "submissions_open" && event.submissionCloseAt && (
+            {event.displayStatus === EVENT_STATUS.SUBMISSIONS_OPEN && event.submissionCloseAt && (
               <CountdownChip deadline={event.submissionCloseAt} />
             )}
           </div>

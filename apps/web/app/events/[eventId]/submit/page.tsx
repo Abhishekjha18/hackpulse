@@ -1,7 +1,7 @@
 "use client";
 
 import type { Submission, Track } from "@hackpulse/shared";
-import { SCORE_STATUS } from "@hackpulse/shared/constants";
+import { SCORE_STATUS, SUBMISSION_STATUS } from "@hackpulse/shared/constants";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -53,7 +53,7 @@ export default function SubmitPage() {
     setMessage(null);
     try {
       if (existing) {
-        const wasSubmitted = existing.status === "submitted";
+        const wasSubmitted = existing.status === SUBMISSION_STATUS.SUBMITTED;
         const updated = await api.patch<Submission>(`/submissions/${existing.id}`, {
           name: form.name,
           tagline: form.tagline,

@@ -1,7 +1,16 @@
 "use client";
 
 import type { Event, EventRoleListEntry, Prize, Submission, Track } from "@hackpulse/shared";
-import { EVENT_ROLE, EVENT_STATUS, SCORING_MODE, VOTING_MODE } from "@hackpulse/shared/constants";
+import {
+  CERTIFICATE_TYPE,
+  EVENT_ROLE,
+  EVENT_STATUS,
+  GALLERY_VISIBILITY,
+  INVITE_STATUS,
+  SCORING_MODE,
+  VOTING_ACCESS,
+  VOTING_MODE,
+} from "@hackpulse/shared/constants";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -13,14 +22,26 @@ import { useAuth } from "../../../../lib/auth-context";
 // only) and archived (its own precondition: only once results_published)
 // are handled separately, not part of this "one step at a time" sequence.
 const REGULAR_MANUAL_STATUSES = [
-  "draft",
-  "registration_open",
-  "submissions_open",
-  "judging",
+  EVENT_STATUS.DRAFT,
+  EVENT_STATUS.REGISTRATION_OPEN,
+  EVENT_STATUS.SUBMISSIONS_OPEN,
+  EVENT_STATUS.JUDGING,
 ] as const;
-const GALLERY_VISIBILITIES = ["open", "participants_only", "hidden"] as const;
-const VOTING_MODES = ["disabled", "single_vote", "quadratic"] as const;
-const VOTING_ACCESS_LEVELS = ["open_link", "email_gated", "authenticated"] as const;
+const GALLERY_VISIBILITIES = [
+  GALLERY_VISIBILITY.OPEN,
+  GALLERY_VISIBILITY.PARTICIPANTS_ONLY,
+  GALLERY_VISIBILITY.HIDDEN,
+] as const;
+const VOTING_MODES = [
+  VOTING_MODE.DISABLED,
+  VOTING_MODE.SINGLE_VOTE,
+  VOTING_MODE.QUADRATIC,
+] as const;
+const VOTING_ACCESS_LEVELS = [
+  VOTING_ACCESS.OPEN_LINK,
+  VOTING_ACCESS.EMAIL_GATED,
+  VOTING_ACCESS.AUTHENTICATED,
+] as const;
 // Reported live: pairwise mode's judging UI (PairwiseJudging, wired into
 // the judge page) was fully built, but there was no organizer-facing way
 // to actually turn it on -- scoringMode was only ever settable via a
@@ -632,11 +653,13 @@ export default function OrganizerPage() {
                       >
                         {event.status === EVENT_STATUS.RESULTS_PUBLISHED ? (
                           <>
-                            <option value="results_published">results published</option>
-                            <option value="archived">archived</option>
+                            <option value={EVENT_STATUS.RESULTS_PUBLISHED}>
+                              results published
+                            </option>
+                            <option value={EVENT_STATUS.ARCHIVED}>archived</option>
                           </>
                         ) : event.status === EVENT_STATUS.ARCHIVED ? (
-                          <option value="archived">archived</option>
+                          <option value={EVENT_STATUS.ARCHIVED}>archived</option>
                         ) : (
                           REGULAR_MANUAL_STATUSES.slice(
                             0,
@@ -1117,15 +1140,15 @@ export default function OrganizerPage() {
                 <span>
                   {o.name} ({o.email})
                 </span>
-                {o.status !== "accepted" && (
+                {o.status !== INVITE_STATUS.ACCEPTED && (
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      o.status === "pending"
+                      o.status === INVITE_STATUS.PENDING
                         ? "bg-accent-soft text-accent-dark"
                         : "bg-surface-alt text-muted"
                     }`}
                   >
-                    {o.status === "pending" ? "Invited, awaiting response" : "Declined"}
+                    {o.status === INVITE_STATUS.PENDING ? "Invited, awaiting response" : "Declined"}
                   </span>
                 )}
               </li>
@@ -1136,7 +1159,7 @@ export default function OrganizerPage() {
 
       {tab === "judges" && (
         <section>
-          {!judges.some((j) => j.userId === user?.id && j.status === "accepted") && (
+          {!judges.some((j) => j.userId === user?.id && j.status === INVITE_STATUS.ACCEPTED) && (
             <div className="mb-6 rounded-lg border border-line bg-surface-alt p-3">
               <p className="text-sm font-medium text-ink">Judge this event yourself</p>
               <div className="mt-2 flex flex-wrap gap-3">
@@ -1254,19 +1277,21 @@ export default function OrganizerPage() {
                   <span>
                     {j.name} ({j.email})
                     {j.tracks.length > 0 ? ` on ${j.tracks.map((t) => t.name).join(", ")}` : ""}
-                    {j.status !== "accepted" && (
+                    {j.status !== INVITE_STATUS.ACCEPTED && (
                       <span
                         className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${
-                          j.status === "pending"
+                          j.status === INVITE_STATUS.PENDING
                             ? "bg-accent-soft text-accent-dark"
                             : "bg-surface-alt text-muted"
                         }`}
                       >
-                        {j.status === "pending" ? "Invited, awaiting response" : "Declined"}
+                        {j.status === INVITE_STATUS.PENDING
+                          ? "Invited, awaiting response"
+                          : "Declined"}
                       </span>
                     )}
                   </span>
-                  {j.status === "accepted" && (
+                  {j.status === INVITE_STATUS.ACCEPTED && (
                     <button
                       type="button"
                       data-testid={`judge-remove-${j.id}`}
@@ -1846,7 +1871,7 @@ export default function OrganizerPage() {
                 className="mt-2 max-h-64 space-y-1 overflow-y-auto rounded-md border border-line p-2 text-sm"
               >
                 {judges
-                  .filter((j) => j.status === "accepted")
+                  .filter((j) => j.status === INVITE_STATUS.ACCEPTED)
                   .filter((j) => !manualTrackId || j.tracks.some((t) => t.id === manualTrackId))
                   .map((j) => (
                     <li key={j.userId}>
@@ -1867,7 +1892,7 @@ export default function OrganizerPage() {
                     </li>
                   ))}
                 {judges
-                  .filter((j) => j.status === "accepted")
+                  .filter((j) => j.status === INVITE_STATUS.ACCEPTED)
                   .filter((j) => !manualTrackId || j.tracks.some((t) => t.id === manualTrackId))
                   .length === 0 && (
                   <li className="text-xs text-muted">
@@ -2167,9 +2192,9 @@ export default function OrganizerPage() {
             </div>
 
             <div className="mt-3 flex flex-wrap gap-1.5" data-testid="certificate-recipients">
-              {(certType === "judge"
+              {(certType === CERTIFICATE_TYPE.JUDGE
                 ? judges
-                    .filter((j) => j.status === "accepted")
+                    .filter((j) => j.status === INVITE_STATUS.ACCEPTED)
                     .map((j) => ({ userId: j.userId, label: j.name }))
                 : teamsForEvent.flatMap((t) =>
                     t.members.map((m) => ({
@@ -2210,9 +2235,9 @@ export default function OrganizerPage() {
               data-testid="certificate-generate"
               onClick={() => {
                 const labelById = new Map(
-                  (certType === "judge"
+                  (certType === CERTIFICATE_TYPE.JUDGE
                     ? judges
-                        .filter((j) => j.status === "accepted")
+                        .filter((j) => j.status === INVITE_STATUS.ACCEPTED)
                         .map((j) => ({ userId: j.userId, label: j.name }))
                     : teamsForEvent.flatMap((t) =>
                         t.members.map((m) => ({ userId: m.userId, label: m.userName })),
