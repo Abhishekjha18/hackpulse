@@ -3,7 +3,7 @@
 import type { Event, Rubric, RubricCriterion, Submission, Track } from "@hackpulse/shared";
 import { JUDGE_ASSIGNMENT_STATUS, SCORING_MODE } from "@hackpulse/shared/constants";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { PairwiseJudging } from "../../../../components/pairwise-judging";
 import { LoadingState, TagPill, ThumbnailOrInitials } from "../../../../components/ui";
@@ -27,6 +27,11 @@ export default function JudgePage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // True while a previously saved score is being fetched. The sliders default
+  // to the scale minimum, so saving before the fetch lands would overwrite the
+  // judge's earlier points with 1s.
+  const [loadingScore, setLoadingScore] = useState(false);
+  const openRequest = useRef(0);
 
   const loadQueue = () => {
     api
@@ -59,12 +64,40 @@ export default function JudgePage() {
     );
   }
 
+  // Reopening an entry must show the judge's saved points, not a blank form:
+  // the form used to start every slider at the minimum, so revisiting a scored
+  // (or drafted) project and pressing save quietly rewrote every criterion to 1.
   function openEntry(entry: QueueEntry) {
+    const request = ++openRequest.current;
     setActive(entry);
     setValues({});
     setFeedback("");
     setMessage(null);
     setError(null);
+    setLoadingScore(true);
+    api
+      .get<{
+        overallFeedback: string | null;
+        criterionScores: { rubricCriterionId: string; value: string }[];
+      }>(`/judging/scores/${entry.assignment.id}`)
+      .then((saved) => {
+        if (request !== openRequest.current) {
+          return;
+        }
+        setValues(
+          Object.fromEntries(
+            saved.criterionScores.map((c) => [c.rubricCriterionId, Number(c.value)]),
+          ),
+        );
+        setFeedback(saved.overallFeedback ?? "");
+      })
+      // 404 just means nothing has been saved for this assignment yet.
+      .catch(() => {})
+      .finally(() => {
+        if (request === openRequest.current) {
+          setLoadingScore(false);
+        }
+      });
   }
 
   async function submitScore(rubric: RubricWithCriteria, isFinal: boolean) {
@@ -240,7 +273,7 @@ export default function JudgePage() {
 
             <div className="flex gap-3">
               <button
-                disabled={busy}
+                disabled={busy || loadingScore}
                 onClick={() => submitScore(rubric, false)}
                 data-testid="score-save-draft"
                 className="rounded-md border border-line bg-paper px-4 py-2 text-sm font-medium hover:bg-surface-alt disabled:opacity-50"
@@ -248,7 +281,7 @@ export default function JudgePage() {
                 Save draft
               </button>
               <button
-                disabled={busy}
+                disabled={busy || loadingScore}
                 onClick={() => submitScore(rubric, true)}
                 data-testid="score-submit-final"
                 className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
