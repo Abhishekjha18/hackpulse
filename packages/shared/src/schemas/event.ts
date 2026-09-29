@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { httpUrl } from "../common";
 import {
+  CUSTOM_QUESTION_TYPE,
   EVENT_STATUS,
   GALLERY_VISIBILITY,
   SCORING_MODE,
@@ -154,12 +155,12 @@ export type Prize = z.infer<typeof Prize>;
 // FR-SUB-01 — organizer-defined custom questions, scoped event-wide
 // (trackId null) or to one track.
 export const CustomQuestionType = z.enum([
-  "text",
-  "long_text",
-  "url",
-  "number",
-  "single_select",
-  "multi_select",
+  CUSTOM_QUESTION_TYPE.TEXT,
+  CUSTOM_QUESTION_TYPE.LONG_TEXT,
+  CUSTOM_QUESTION_TYPE.URL,
+  CUSTOM_QUESTION_TYPE.NUMBER,
+  CUSTOM_QUESTION_TYPE.SINGLE_SELECT,
+  CUSTOM_QUESTION_TYPE.MULTI_SELECT,
 ]);
 export type CustomQuestionType = z.infer<typeof CustomQuestionType>;
 

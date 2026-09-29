@@ -1,4 +1,4 @@
-import { SCORE_STATUS } from "@hackpulse/shared";
+import { NORMALIZATION_METHOD, SCORE_STATUS } from "@hackpulse/shared";
 import { Inject, Injectable } from "@nestjs/common";
 import { and, desc, eq, inArray } from "drizzle-orm";
 
@@ -65,7 +65,7 @@ export class NormalizationService {
         await tx.insert(normalizedResults).values({
           submissionId: a.submissionId,
           rubricId,
-          method: "z_score",
+          method: NORMALIZATION_METHOD.Z_SCORE,
           rawMean: a.rawMean.toString(),
           normalizedMean: a.normalizedMean.toString(),
           rank: a.rank,

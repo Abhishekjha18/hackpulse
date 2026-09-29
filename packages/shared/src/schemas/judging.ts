@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { INVITE_STATUS } from "../constants";
+import { INVITE_STATUS, NORMALIZATION_METHOD, PAIRWISE_WINNER } from "../constants";
 import { EventRole } from "./user";
 
 // FR-JASSIGN-01
@@ -154,7 +154,10 @@ export const SaveScoreInput = z.object({
 });
 export type SaveScoreInput = z.infer<typeof SaveScoreInput>;
 
-export const NormalizationMethod = z.enum(["z_score", "min_max"]);
+export const NormalizationMethod = z.enum([
+  NORMALIZATION_METHOD.Z_SCORE,
+  NORMALIZATION_METHOD.MIN_MAX,
+]);
 export type NormalizationMethod = z.infer<typeof NormalizationMethod>;
 
 // FR-PAIR
@@ -162,6 +165,6 @@ export const PairwiseCompareInput = z.object({
   trackId: z.string().uuid(),
   submissionA: z.string().uuid(),
   submissionB: z.string().uuid(),
-  winner: z.enum(["a", "b", "tie"]),
+  winner: z.enum([PAIRWISE_WINNER.A, PAIRWISE_WINNER.B, PAIRWISE_WINNER.TIE]),
 });
 export type PairwiseCompareInput = z.infer<typeof PairwiseCompareInput>;

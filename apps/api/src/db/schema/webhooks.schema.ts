@@ -1,8 +1,8 @@
+import { WEBHOOK_DELIVERY_STATUS } from "@hackpulse/shared";
 import { boolean, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { webhookDeliveryStatusEnum } from "./enums";
 import { events } from "./events.schema";
-
 // FR-API-03
 export const webhooks = pgTable("webhooks", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -23,7 +23,7 @@ export const webhookDeliveries = pgTable("webhook_deliveries", {
     .references(() => webhooks.id, { onDelete: "cascade" }),
   eventType: text("event_type").notNull(),
   payload: jsonb("payload").notNull(),
-  status: webhookDeliveryStatusEnum("status").notNull().default("pending"),
+  status: webhookDeliveryStatusEnum("status").notNull().default(WEBHOOK_DELIVERY_STATUS.PENDING),
   attemptCount: integer("attempt_count").notNull().default(0),
   lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
   responseCode: integer("response_code"),

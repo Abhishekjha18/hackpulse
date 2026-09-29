@@ -1,5 +1,6 @@
 export * from "./audit-actions";
 export * from "./certificate-types";
+export * from "./custom-question-types";
 export * from "./error-codes";
 export * from "./event-roles";
 export * from "./event-statuses";
@@ -7,5 +8,7 @@ export * from "./headers";
 export * from "./invite-statuses";
 export * from "./judging-statuses";
 export * from "./lifecycle-modes";
+export * from "./normalization";
+export * from "./pairwise";
 export * from "./voting";
 export * from "./webhook-events";

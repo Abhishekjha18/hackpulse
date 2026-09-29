@@ -9,6 +9,7 @@ import {
   EVENT_STATUS,
   GALLERY_VISIBILITY,
   JUDGE_ASSIGNMENT_STATUS,
+  NORMALIZATION_METHOD,
   SCORE_STATUS,
   SCORING_MODE,
   SUBMISSION_STATUS,
@@ -175,7 +176,7 @@ async function recomputeNormalization(rubricId: string): Promise<void> {
     await db.insert(normalizedResults).values({
       submissionId: r.submissionId,
       rubricId,
-      method: "z_score",
+      method: NORMALIZATION_METHOD.Z_SCORE,
       rawMean: r.rawMean.toString(),
       normalizedMean: r.normalizedMean.toString(),
       rank: r.rank,

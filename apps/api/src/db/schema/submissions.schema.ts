@@ -1,10 +1,10 @@
+import { SUBMISSION_STATUS } from "@hackpulse/shared";
 import { index, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 
 import { user } from "./auth.schema";
 import { submissionStatusEnum } from "./enums";
 import { customQuestions, tracks } from "./events.schema";
 import { teams } from "./teams.schema";
-
 // FR-SUB
 export const submissions = pgTable(
   "submissions",
@@ -25,7 +25,7 @@ export const submissions = pgTable(
     repoUrl: text("repo_url"),
     liveUrl: text("live_url"),
     techTags: jsonb("tech_tags").$type<string[]>().notNull().default([]),
-    status: submissionStatusEnum("status").notNull().default("draft"),
+    status: submissionStatusEnum("status").notNull().default(SUBMISSION_STATUS.DRAFT),
     contentHash: text("content_hash"),
     submittedAt: timestamp("submitted_at", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

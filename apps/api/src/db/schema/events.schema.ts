@@ -1,3 +1,10 @@
+import {
+  EVENT_STATUS,
+  GALLERY_VISIBILITY,
+  SCORING_MODE,
+  VOTING_ACCESS,
+  VOTING_MODE,
+} from "@hackpulse/shared";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -20,7 +27,6 @@ import {
   votingAccessEnum,
   votingModeEnum,
 } from "./enums";
-
 // FR-EVT
 // Two lifecycle modes, requested explicitly: "automatic" (all six of the
 // registration/submission/judging timestamps set, status computed from the
@@ -53,11 +59,13 @@ export const events = pgTable(
     judgingOpenAt: timestamp("judging_open_at", { withTimezone: true }),
     judgingCloseAt: timestamp("judging_close_at", { withTimezone: true }),
     resultsPublishAt: timestamp("results_publish_at", { withTimezone: true }),
-    status: eventStatusEnum("status").notNull().default("draft"),
-    galleryVisibility: galleryVisibilityEnum("gallery_visibility").notNull().default("hidden"),
-    votingMode: votingModeEnum("voting_mode").notNull().default("disabled"),
-    votingAccess: votingAccessEnum("voting_access").notNull().default("authenticated"),
-    scoringMode: scoringModeEnum("scoring_mode").notNull().default("rubric"),
+    status: eventStatusEnum("status").notNull().default(EVENT_STATUS.DRAFT),
+    galleryVisibility: galleryVisibilityEnum("gallery_visibility")
+      .notNull()
+      .default(GALLERY_VISIBILITY.HIDDEN),
+    votingMode: votingModeEnum("voting_mode").notNull().default(VOTING_MODE.DISABLED),
+    votingAccess: votingAccessEnum("voting_access").notNull().default(VOTING_ACCESS.AUTHENTICATED),
+    scoringMode: scoringModeEnum("scoring_mode").notNull().default(SCORING_MODE.RUBRIC),
     // FR-TEAM-02 (team size 1-4).
     maxTeamSize: integer("max_team_size").notNull().default(4),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

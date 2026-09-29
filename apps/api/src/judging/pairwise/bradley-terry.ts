@@ -1,3 +1,4 @@
+import { PAIRWISE_WINNER } from "@hackpulse/shared";
 /**
  * Bradley-Terry pairwise ranking, fit by minorization-maximization (Hunter,
  * 2004, "MM algorithms for generalized Bradley-Terry models"). This is
@@ -57,9 +58,9 @@ function buildModel(items: string[], comparisons: Comparison[]) {
     }
     opponents.get(c.a)!.set(c.b, (opponents.get(c.a)!.get(c.b) ?? 0) + 1);
     opponents.get(c.b)!.set(c.a, (opponents.get(c.b)!.get(c.a) ?? 0) + 1);
-    if (c.winner === "a") {
+    if (c.winner === PAIRWISE_WINNER.A) {
       wins.set(c.a, wins.get(c.a)! + 1);
-    } else if (c.winner === "b") {
+    } else if (c.winner === PAIRWISE_WINNER.B) {
       wins.set(c.b, wins.get(c.b)! + 1);
     } else {
       wins.set(c.a, wins.get(c.a)! + 0.5);

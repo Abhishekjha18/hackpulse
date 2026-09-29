@@ -1,3 +1,4 @@
+import { INVITE_STATUS, JUDGE_ASSIGNMENT_STATUS, SCORE_STATUS } from "@hackpulse/shared";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -23,7 +24,6 @@ import {
 } from "./enums";
 import { events, tracks } from "./events.schema";
 import { submissions } from "./submissions.schema";
-
 // FR-JASSIGN / co-organizer invites, sharing one table and state machine
 // (role column) rather than reimplementing pending/accept/decline twice.
 // A pending or declined invite grants nothing: event_roles/judge_track_scopes
@@ -47,7 +47,7 @@ export const eventInvites = pgTable(
       .references(() => user.id),
     role: eventRoleEnum("role").notNull(),
     trackIds: jsonb("track_ids").$type<string[]>().notNull(),
-    status: judgeInviteStatusEnum("status").notNull().default("pending"),
+    status: judgeInviteStatusEnum("status").notNull().default(INVITE_STATUS.PENDING),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     respondedAt: timestamp("responded_at", { withTimezone: true }),
   },
@@ -68,7 +68,7 @@ export const judgeAssignments = pgTable(
     submissionId: uuid("submission_id")
       .notNull()
       .references(() => submissions.id, { onDelete: "cascade" }),
-    status: judgeAssignmentStatusEnum("status").notNull().default("assigned"),
+    status: judgeAssignmentStatusEnum("status").notNull().default(JUDGE_ASSIGNMENT_STATUS.ASSIGNED),
     assignedByUserId: text("assigned_by_user_id")
       .notNull()
       .references(() => user.id),
@@ -122,7 +122,7 @@ export const scores = pgTable(
     rubricId: uuid("rubric_id")
       .notNull()
       .references(() => rubrics.id),
-    status: draftSubmittedStatusEnum("status").notNull().default("draft"),
+    status: draftSubmittedStatusEnum("status").notNull().default(SCORE_STATUS.DRAFT),
     rawWeightedScore: numeric("raw_weighted_score", { precision: 6, scale: 3 }),
     overallFeedback: text("overall_feedback"),
     submittedAt: timestamp("submitted_at", { withTimezone: true }),
