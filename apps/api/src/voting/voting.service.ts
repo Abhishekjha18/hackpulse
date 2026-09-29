@@ -14,15 +14,25 @@ import { and, eq, ne, sql } from "drizzle-orm";
 import { AuditService } from "../audit/audit.service";
 import { RateLimiterService } from "../common/rate-limiter.service";
 import type { Database } from "../db/client";
-import { events, submissions, teams, votes } from "../db/schema";
+import { events, submissions, teamMembers, teams, votes } from "../db/schema";
 import { DB } from "../db/tokens";
 import { seededShuffle } from "./seeded-shuffle";
+import { voteBlockReason } from "./vote-eligibility.util";
 
 // FR-VOTE-02: "casting n votes costs the square root of n in influence."
 // A fixed per-voter, per-event budget of influence; the classic quadratic
 // property (doubling votes on one project costs much more than linear)
 // falls out of summing sqrt(n) across submissions against this budget.
 const QUADRATIC_BUDGET = 10;
+
+// F6: per-identity rate limiting is defeated by rotating X-Voter-Token or
+// X-Voter-Email (60 fresh tokens = 60 accepted votes in seconds, found
+// live), and per-IP limiting isn't possible here (behind the web proxy
+// every browser looks like the same address, and the API has no trusted
+// forwarded-for). So anonymous voting also gets an event-wide velocity cap:
+// it can't stop a determined stuffer, but it bounds how fast one can move
+// the tally, without punishing a real crowd voting from one venue network.
+const ANON_EVENT_VOTES_PER_MINUTE = 120;
 
 export interface VoterIdentity {
   voterId: string;
@@ -98,6 +108,58 @@ export class VotingService {
     return this.resolveVoter(currentUser, voterToken);
   }
 
+  // F6: the event's judges/organizers and the team being voted for can't
+  // vote (found live: a team owner voted for their own project). Only
+  // account-backed voters can be recognised; an anonymous token or email
+  // carries no identity to check, which is the residual gap documented in
+  // THREAT-MODEL.md.
+  private async assertMayVote(
+    event: { id: string; status: string },
+    submission: { teamId: string },
+    currentUser: CurrentUser | null,
+  ) {
+    let isTeamMember = false;
+    if (currentUser) {
+      const [member] = await this.db
+        .select({ userId: teamMembers.userId })
+        .from(teamMembers)
+        .where(
+          and(eq(teamMembers.teamId, submission.teamId), eq(teamMembers.userId, currentUser.id)),
+        );
+      const [team] = await this.db
+        .select({ ownerUserId: teams.ownerUserId })
+        .from(teams)
+        .where(eq(teams.id, submission.teamId));
+      isTeamMember = Boolean(member) || team?.ownerUserId === currentUser.id;
+    }
+
+    const reason = voteBlockReason({
+      status: event.status,
+      eventRoles: (currentUser?.eventRoles ?? [])
+        .filter((r) => r.eventId === event.id)
+        .map((r) => r.role),
+      isTeamMember,
+    });
+    if (reason === "VOTING_CLOSED") {
+      throw new ConflictException({
+        error: { code: "VOTING_CLOSED", message: "Voting isn't open for this event right now" },
+      });
+    }
+    if (reason === "EVENT_STAFF") {
+      throw new ForbiddenException({
+        error: {
+          code: "FORBIDDEN",
+          message: "Judges and organizers of an event can't vote in it",
+        },
+      });
+    }
+    if (reason === "OWN_SUBMISSION") {
+      throw new ForbiddenException({
+        error: { code: "FORBIDDEN", message: "You can't vote for your own team's submission" },
+      });
+    }
+  }
+
   // FR-VOTE-03: deterministic-per-voter randomized order.
   async getBallot(eventId: string, voter: VoterIdentity) {
     const rows = await this.db
@@ -133,6 +195,21 @@ export class VotingService {
     // own votingAccess setting.
     const voter = this.resolveVoterForCasting(event, currentUser, voterToken, voterEmail);
 
+    if (
+      !voter.isAuthenticated &&
+      !this.rateLimiter.consume("vote-anon-event", eventId, 60_000, ANON_EVENT_VOTES_PER_MINUTE)
+    ) {
+      throw new HttpException(
+        {
+          error: {
+            code: "RATE_LIMITED",
+            message: "Too many anonymous votes on this event right now, please try again shortly",
+          },
+        },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
     if (!this.rateLimiter.consume("vote", voter.voterId, 60_000, 20)) {
       throw new HttpException(
         { error: { code: "RATE_LIMITED", message: "Too many votes cast, please slow down" } },
@@ -147,6 +224,8 @@ export class VotingService {
     if (!submission || submission.status !== "submitted") {
       throw new NotFoundException();
     }
+
+    await this.assertMayVote(event, submission, currentUser);
 
     let votesCast = 1;
     let cost = 1;
