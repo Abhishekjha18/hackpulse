@@ -31,6 +31,7 @@ That one command brings up Postgres, Redis, the API, and the web app. The instan
 
 | Doc                                               | What's in it                                                                              |
 | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| [GUIDE.md](GUIDE.md)                              | A first-timer's walkthrough of every feature, with screenshots                            |
 | [REQUIREMENTS.md](REQUIREMENTS.md)                | Every requirement, functional and otherwise, with a stable ID                             |
 | [DATA-MODEL.md](DATA-MODEL.md)                    | Schema, entity relationships, import and export paths                                     |
 | [ARCHITECTURE.md](ARCHITECTURE.md)                | System design, module boundaries, request flows, decision records                         |
