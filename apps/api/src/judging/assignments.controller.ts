@@ -1,4 +1,8 @@
-import { CreateAssignmentsInput, type CurrentUser as CurrentUserType } from "@hackpulse/shared";
+import {
+  CreateAssignmentsInput,
+  type CurrentUser as CurrentUserType,
+  EVENT_ROLE,
+} from "@hackpulse/shared";
 import { Body, Controller, Get, Param, Post } from "@nestjs/common";
 
 import { CurrentUser } from "../auth/current-user.decorator";
@@ -11,7 +15,7 @@ export class AssignmentsController {
   constructor(private readonly assignments: AssignmentsService) {}
 
   @Post("assignments")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   create(
     @Param("eventId") eventId: string,
     @Body(new ZodValidationPipe(CreateAssignmentsInput)) body: CreateAssignmentsInput,
@@ -21,13 +25,13 @@ export class AssignmentsController {
   }
 
   @Get("queue")
-  @Roles("judge")
+  @Roles(EVENT_ROLE.JUDGE)
   queue(@Param("eventId") eventId: string, @CurrentUser() user: CurrentUserType) {
     return this.assignments.getQueue(eventId, user.id);
   }
 
   @Get("progress")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   progress(@Param("eventId") eventId: string) {
     return this.assignments.getProgress(eventId);
   }

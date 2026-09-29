@@ -1,4 +1,4 @@
-import { AUDIT_ACTION, ERROR_CODE } from "@hackpulse/shared";
+import { AUDIT_ACTION, ERROR_CODE, EVENT_STATUS } from "@hackpulse/shared";
 import { ConflictException, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 
@@ -29,7 +29,7 @@ export async function assertJudgingWindowOpen(
     throw new NotFoundException();
   }
   if (event.judgingOpenAt === null) {
-    if (event.status !== "judging") {
+    if (event.status !== EVENT_STATUS.JUDGING) {
       await audit.log({
         eventId,
         actorUserId,

@@ -2,7 +2,9 @@ import {
   AUDIT_ACTION,
   type CurrentUser,
   ERROR_CODE,
+  JUDGE_ASSIGNMENT_STATUS,
   type SaveScoreInput,
+  SCORE_STATUS,
   WEBHOOK_EVENT,
 } from "@hackpulse/shared";
 import {
@@ -136,7 +138,7 @@ export class ScoringService {
       .from(scores)
       .where(eq(scores.judgeAssignmentId, assignmentId));
 
-    const wasSubmitted = existing?.status === "submitted";
+    const wasSubmitted = existing?.status === SCORE_STATUS.SUBMITTED;
 
     const result = await this.db.transaction(async (tx) => {
       let score = existing;
@@ -198,7 +200,7 @@ export class ScoringService {
       if (!wasSubmitted) {
         await tx
           .update(judgeAssignments)
-          .set({ status: "in_progress" })
+          .set({ status: JUDGE_ASSIGNMENT_STATUS.IN_PROGRESS })
           .where(eq(judgeAssignments.id, assignmentId));
       }
 
@@ -258,7 +260,7 @@ export class ScoringService {
         },
       });
     }
-    if (score.status === "submitted") {
+    if (score.status === SCORE_STATUS.SUBMITTED) {
       throw new ConflictException({
         error: {
           code: ERROR_CODE.CONFLICT,
@@ -301,7 +303,7 @@ export class ScoringService {
 
       await tx
         .update(judgeAssignments)
-        .set({ status: "completed" })
+        .set({ status: JUDGE_ASSIGNMENT_STATUS.COMPLETED })
         .where(eq(judgeAssignments.id, assignmentId));
 
       return rows;
@@ -337,7 +339,7 @@ export class ScoringService {
       .from(judgeAssignments)
       .where(eq(judgeAssignments.submissionId, assignment.submissionId));
 
-    const allCompleted = siblings.every((a) => a.status === "completed");
+    const allCompleted = siblings.every((a) => a.status === JUDGE_ASSIGNMENT_STATUS.COMPLETED);
     if (!allCompleted) {
       return;
     }
@@ -350,7 +352,7 @@ export class ScoringService {
 
   // F7: every post-submit edit stores the pre-edit snapshot in
   // score_revisions, but nothing used to read it back. Organizer-only (the
-  // route is @Roles("organizer")): lists each revision with who edited it,
+  // route is @Roles(EVENT_ROLE.ORGANIZER)): lists each revision with who edited it,
   // for which judge and submission, and the raw score before and after.
   async listRevisions(eventId: string) {
     const rows = await this.db

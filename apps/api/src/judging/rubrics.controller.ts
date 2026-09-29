@@ -1,4 +1,4 @@
-import { CreateRubricInput } from "@hackpulse/shared";
+import { CreateRubricInput, EVENT_ROLE } from "@hackpulse/shared";
 import { Body, Controller, Delete, Get, Param, Post, Query } from "@nestjs/common";
 
 import { Roles } from "../common/decorators/roles.decorator";
@@ -10,7 +10,7 @@ export class RubricsController {
   constructor(private readonly rubrics: RubricsService) {}
 
   @Post()
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   create(
     @Param("eventId") eventId: string,
     @Body(new ZodValidationPipe(CreateRubricInput)) body: CreateRubricInput,
@@ -19,7 +19,7 @@ export class RubricsController {
   }
 
   @Get()
-  @Roles("organizer", "judge")
+  @Roles(EVENT_ROLE.ORGANIZER, EVENT_ROLE.JUDGE)
   list(
     @Param("eventId") eventId: string,
     @Query("includeArchived") includeArchived: string | undefined,
@@ -28,19 +28,19 @@ export class RubricsController {
   }
 
   @Get(":rubricId")
-  @Roles("organizer", "judge")
+  @Roles(EVENT_ROLE.ORGANIZER, EVENT_ROLE.JUDGE)
   findOne(@Param("eventId") eventId: string, @Param("rubricId") rubricId: string) {
     return this.rubrics.findOne(eventId, rubricId);
   }
 
   @Delete(":rubricId")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   delete(@Param("eventId") eventId: string, @Param("rubricId") rubricId: string) {
     return this.rubrics.delete(eventId, rubricId);
   }
 
   @Delete(":rubricId/criteria/:criterionId")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   deleteCriterion(
     @Param("eventId") eventId: string,
     @Param("rubricId") rubricId: string,
@@ -50,13 +50,13 @@ export class RubricsController {
   }
 
   @Post(":rubricId/archive")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   archive(@Param("eventId") eventId: string, @Param("rubricId") rubricId: string) {
     return this.rubrics.archive(eventId, rubricId);
   }
 
   @Post(":rubricId/unarchive")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   unarchive(@Param("eventId") eventId: string, @Param("rubricId") rubricId: string) {
     return this.rubrics.unarchive(eventId, rubricId);
   }

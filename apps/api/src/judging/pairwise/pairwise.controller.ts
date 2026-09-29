@@ -1,4 +1,8 @@
-import { type CurrentUser as CurrentUserType, PairwiseCompareInput } from "@hackpulse/shared";
+import {
+  type CurrentUser as CurrentUserType,
+  EVENT_ROLE,
+  PairwiseCompareInput,
+} from "@hackpulse/shared";
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
 
 import { CurrentUser } from "../../auth/current-user.decorator";
@@ -12,7 +16,7 @@ export class PairwiseController {
   constructor(private readonly pairwise: PairwiseService) {}
 
   @Get("next")
-  @Roles("judge")
+  @Roles(EVENT_ROLE.JUDGE)
   @UseGuards(TrackScopeGuard)
   next(
     @Param("eventId") eventId: string,
@@ -23,7 +27,7 @@ export class PairwiseController {
   }
 
   @Post("compare")
-  @Roles("judge")
+  @Roles(EVENT_ROLE.JUDGE)
   @UseGuards(TrackScopeGuard)
   compare(
     @Param("eventId") eventId: string,
@@ -34,7 +38,7 @@ export class PairwiseController {
   }
 
   @Get("rankings")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   rankings(@Param("eventId") eventId: string, @Query("trackId") trackId: string) {
     return this.pairwise.getRankings(eventId, trackId);
   }
@@ -44,7 +48,7 @@ export class PairwiseController {
   // rubric mode. Backs the notifications bell's pending-judging reminder
   // for pairwise-mode events.
   @Get("progress")
-  @Roles("judge")
+  @Roles(EVENT_ROLE.JUDGE)
   progress(@Param("eventId") eventId: string, @CurrentUser() user: CurrentUserType) {
     return this.pairwise.getProgressForJudge(eventId, user.id);
   }
@@ -55,7 +59,7 @@ export class PairwiseController {
   // events, which previously showed nothing (it only ever read the
   // rubric-mode assignment table).
   @Get("organizer-progress")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   organizerProgress(@Param("eventId") eventId: string) {
     return this.pairwise.getProgressForOrganizer(eventId);
   }

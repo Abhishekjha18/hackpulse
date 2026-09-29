@@ -1,10 +1,10 @@
+import { EVENT_ROLE } from "@hackpulse/shared";
 import { Inject, Injectable } from "@nestjs/common";
 import { and, eq } from "drizzle-orm";
 
 import type { Database } from "../db/client";
 import { eventRoles, judgeTrackScopes } from "../db/schema";
 import { DB } from "../db/tokens";
-
 // Shared by AssignmentsService (algorithmic assignment only ever offers a
 // submission to judges scoped to its track) and PairwiseService (a judge
 // can only fetch/compare pairs within a track they're scoped to). Both need
@@ -26,7 +26,7 @@ export class JudgeTrackScopeService {
         and(
           eq(eventRoles.eventId, eventId),
           eq(eventRoles.userId, judgeUserId),
-          eq(eventRoles.role, "judge"),
+          eq(eventRoles.role, EVENT_ROLE.JUDGE),
           eq(judgeTrackScopes.trackId, trackId),
         ),
       );
@@ -46,7 +46,7 @@ export class JudgeTrackScopeService {
         and(
           eq(eventRoles.eventId, eventId),
           eq(eventRoles.userId, judgeUserId),
-          eq(eventRoles.role, "judge"),
+          eq(eventRoles.role, EVENT_ROLE.JUDGE),
         ),
       );
     return rows.map((r) => r.trackId);
@@ -60,7 +60,7 @@ export class JudgeTrackScopeService {
       .where(
         and(
           eq(eventRoles.eventId, eventId),
-          eq(eventRoles.role, "judge"),
+          eq(eventRoles.role, EVENT_ROLE.JUDGE),
           eq(judgeTrackScopes.trackId, trackId),
         ),
       );

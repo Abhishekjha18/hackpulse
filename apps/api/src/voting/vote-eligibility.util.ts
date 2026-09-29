@@ -1,3 +1,4 @@
+import { EVENT_ROLE } from "@hackpulse/shared";
 // Who may vote and when, as pure rules so they can be tested without a
 // database. VotingService supplies the facts (status, roles, team
 // membership) and turns a non-null reason into an HTTP error.
@@ -18,7 +19,10 @@ export function voteBlockReason(input: {
   if (CLOSED_STATUSES.has(input.status)) {
     return "VOTING_CLOSED";
   }
-  if (input.eventRoles.includes("judge") || input.eventRoles.includes("organizer")) {
+  if (
+    input.eventRoles.includes(EVENT_ROLE.JUDGE) ||
+    input.eventRoles.includes(EVENT_ROLE.ORGANIZER)
+  ) {
     return "EVENT_STAFF";
   }
   if (input.isTeamMember) {

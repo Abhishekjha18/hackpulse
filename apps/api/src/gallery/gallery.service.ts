@@ -1,4 +1,4 @@
-import type { CurrentUser } from "@hackpulse/shared";
+import { type CurrentUser, GALLERY_VISIBILITY, SUBMISSION_STATUS } from "@hackpulse/shared";
 import { ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 
@@ -44,17 +44,24 @@ export class GalleryService {
       throw new NotFoundException();
     }
 
-    if (event.galleryVisibility === "hidden" && !isPrivileged) {
+    if (event.galleryVisibility === GALLERY_VISIBILITY.HIDDEN && !isPrivileged) {
       throw new ForbiddenException();
     }
-    if (event.galleryVisibility === "participants_only" && !currentUser && !isPrivileged) {
+    if (
+      event.galleryVisibility === GALLERY_VISIBILITY.PARTICIPANTS_ONLY &&
+      !currentUser &&
+      !isPrivileged
+    ) {
       throw new ForbiddenException();
     }
 
     const limit = Math.min(Math.max(query.limit ?? 20, 1), 100);
     const cursor = decodeCursor(query.cursor);
 
-    const conditions = [eq(teams.eventId, eventId), eq(submissions.status, "submitted")];
+    const conditions = [
+      eq(teams.eventId, eventId),
+      eq(submissions.status, SUBMISSION_STATUS.SUBMITTED),
+    ];
 
     if (query.track) {
       conditions.push(eq(submissions.trackId, query.track));
@@ -125,12 +132,15 @@ export class GalleryService {
     if (!isEventVisible(event)) {
       throw new ForbiddenException();
     }
-    if (event.galleryVisibility !== "open") {
+    if (event.galleryVisibility !== GALLERY_VISIBILITY.OPEN) {
       throw new ForbiddenException();
     }
 
     const limit = Math.min(Math.max(opts.limit, 1), 24);
-    const conditions = [eq(teams.eventId, eventId), eq(submissions.status, "submitted")];
+    const conditions = [
+      eq(teams.eventId, eventId),
+      eq(submissions.status, SUBMISSION_STATUS.SUBMITTED),
+    ];
     if (opts.track) {
       conditions.push(eq(submissions.trackId, opts.track));
     }

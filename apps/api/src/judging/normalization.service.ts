@@ -1,3 +1,4 @@
+import { SCORE_STATUS } from "@hackpulse/shared";
 import { Inject, Injectable } from "@nestjs/common";
 import { and, desc, eq, inArray } from "drizzle-orm";
 
@@ -11,7 +12,6 @@ import {
   detectOutlierJudges,
   groupByJudge,
 } from "./normalization-math";
-
 /**
  * Cross-judge normalization (FR-NORM). Method: per-judge z-score.
  *
@@ -48,7 +48,7 @@ export class NormalizationService {
       })
       .from(scores)
       .innerJoin(judgeAssignments, eq(judgeAssignments.id, scores.judgeAssignmentId))
-      .where(and(eq(scores.rubricId, rubricId), eq(scores.status, "submitted")));
+      .where(and(eq(scores.rubricId, rubricId), eq(scores.status, SCORE_STATUS.SUBMITTED)));
   }
 
   async recompute(rubricId: string) {

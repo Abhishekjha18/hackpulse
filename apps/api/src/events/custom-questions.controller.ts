@@ -1,4 +1,4 @@
-import { CreateCustomQuestionInput } from "@hackpulse/shared";
+import { CreateCustomQuestionInput, EVENT_ROLE } from "@hackpulse/shared";
 import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
 
 import { Public } from "../common/decorators/public.decorator";
@@ -11,7 +11,7 @@ export class CustomQuestionsController {
   constructor(private readonly customQuestions: CustomQuestionsService) {}
 
   @Post()
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   create(
     @Param("eventId") eventId: string,
     @Body(new ZodValidationPipe(CreateCustomQuestionInput)) body: CreateCustomQuestionInput,

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { CastVoteInput, type CurrentUser as CurrentUserType } from "@hackpulse/shared";
+import { CastVoteInput, type CurrentUser as CurrentUserType, HEADER } from "@hackpulse/shared";
 import { Body, Controller, Get, Headers, Param, Post, Req } from "@nestjs/common";
 
 import { CurrentUser } from "../auth/current-user.decorator";
@@ -22,7 +22,7 @@ export class VotingController {
   ballot(
     @Param("eventId") eventId: string,
     @CurrentUser() user: CurrentUserType | null,
-    @Headers("x-voter-token") voterToken: string | undefined,
+    @Headers(HEADER.VOTER_TOKEN) voterToken: string | undefined,
   ) {
     const voter = this.voting.resolveVoter(user, voterToken);
     return this.voting.getBallot(eventId, voter);
@@ -34,8 +34,8 @@ export class VotingController {
     @Param("eventId") eventId: string,
     @Body(new ZodValidationPipe(CastVoteInput)) body: CastVoteInput,
     @CurrentUser() user: CurrentUserType | null,
-    @Headers("x-voter-token") voterToken: string | undefined,
-    @Headers("x-voter-email") voterEmail: string | undefined,
+    @Headers(HEADER.VOTER_TOKEN) voterToken: string | undefined,
+    @Headers(HEADER.VOTER_EMAIL) voterEmail: string | undefined,
     @Req() req: RequestWithIp,
   ) {
     const ipHash = createHash("sha256").update(req.ip).digest("hex");

@@ -1,4 +1,4 @@
-import type { CurrentUser as CurrentUserType } from "@hackpulse/shared";
+import { type CurrentUser as CurrentUserType, EVENT_ROLE } from "@hackpulse/shared";
 import { Controller, Get, Param, Post } from "@nestjs/common";
 
 import { CurrentUser } from "../auth/current-user.decorator";
@@ -17,20 +17,20 @@ export class ResultsController {
   }
 
   @Get("preview")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   preview(@Param("eventId") eventId: string) {
     return this.results.getPreview(eventId);
   }
 
   // Allows the organizer dashboard to display unjudged submissions before publish.
   @Get("unjudged")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   unjudged(@Param("eventId") eventId: string) {
     return this.results.findUnjudgedSubmissions(eventId);
   }
 
   @Post("publish")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   publish(@Param("eventId") eventId: string, @CurrentUser() user: CurrentUserType) {
     return this.results.publish(eventId, user);
   }

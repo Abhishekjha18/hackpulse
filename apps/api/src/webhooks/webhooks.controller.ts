@@ -1,4 +1,4 @@
-import { RegisterWebhookInput } from "@hackpulse/shared";
+import { EVENT_ROLE, RegisterWebhookInput } from "@hackpulse/shared";
 import { Body, Controller, Get, Param, Post } from "@nestjs/common";
 
 import { Roles } from "../common/decorators/roles.decorator";
@@ -10,7 +10,7 @@ export class WebhooksController {
   constructor(private readonly webhooks: WebhooksService) {}
 
   @Post("events/:eventId/webhooks")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   register(
     @Param("eventId") eventId: string,
     @Body(new ZodValidationPipe(RegisterWebhookInput)) body: RegisterWebhookInput,
@@ -24,13 +24,13 @@ export class WebhooksController {
   // deny every organizer (RolesGuard has no event to match their role
   // against), which is a worse failure mode than an unused param.
   @Get("events/:eventId/webhooks/:webhookId/deliveries")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   deliveries(@Param("webhookId") webhookId: string) {
     return this.webhooks.getDeliveries(webhookId);
   }
 
   @Post("events/:eventId/webhooks/:webhookId/redeliver/:deliveryId")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   redeliver(@Param("webhookId") webhookId: string, @Param("deliveryId") deliveryId: string) {
     return this.webhooks.redeliver(webhookId, deliveryId);
   }

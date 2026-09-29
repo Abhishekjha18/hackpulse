@@ -1,4 +1,8 @@
-import { type CurrentUser as CurrentUserType, InviteCoOrganizerInput } from "@hackpulse/shared";
+import {
+  type CurrentUser as CurrentUserType,
+  EVENT_ROLE,
+  InviteCoOrganizerInput,
+} from "@hackpulse/shared";
 import { Body, Controller, Get, Param, Post } from "@nestjs/common";
 
 import { CurrentUser } from "../auth/current-user.decorator";
@@ -16,7 +20,7 @@ export class OrganizersController {
   constructor(private readonly invites: EventRoleInvitesService) {}
 
   @Post("events/:eventId/organizers")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   invite(
     @Param("eventId") eventId: string,
     @Body(new ZodValidationPipe(InviteCoOrganizerInput)) body: InviteCoOrganizerInput,
@@ -26,7 +30,7 @@ export class OrganizersController {
   }
 
   @Get("events/:eventId/organizers")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   list(@Param("eventId") eventId: string) {
     return this.invites.listForEvent(eventId, "organizer");
   }

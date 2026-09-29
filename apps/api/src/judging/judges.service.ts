@@ -1,6 +1,7 @@
 import {
   AUDIT_ACTION,
   ERROR_CODE,
+  EVENT_ROLE,
   type EventRoleListEntry,
   type InviteJudgeInput,
   type SelfJudgeInput,
@@ -46,7 +47,7 @@ export class JudgesService {
 
   // The organizer judging their own event: clicking this on their own
   // dashboard already is consent, so unlike invite() this grants the role
-  // directly, no pending state, no invite row. @Roles("organizer") in the
+  // directly, no pending state, no invite row. @Roles(EVENT_ROLE.ORGANIZER) in the
   // controller proves it's actually them and actually their event.
   async selfJudge(eventId: string, organizerUserId: string, input: SelfJudgeInput) {
     const validTracks = await this.db
@@ -69,14 +70,14 @@ export class JudgesService {
         and(
           eq(eventRoles.eventId, eventId),
           eq(eventRoles.userId, organizerUserId),
-          eq(eventRoles.role, "judge"),
+          eq(eventRoles.role, EVENT_ROLE.JUDGE),
         ),
       );
     let isNewGrant = false;
     if (!role) {
       [role] = await this.db
         .insert(eventRoles)
-        .values({ eventId, userId: organizerUserId, role: "judge" })
+        .values({ eventId, userId: organizerUserId, role: EVENT_ROLE.JUDGE })
         .returning();
       isNewGrant = true;
     }
@@ -92,7 +93,7 @@ export class JudgesService {
         action: AUDIT_ACTION.EVENT_ROLE_GRANTED,
         resourceType: "event_role",
         resourceId: role.id,
-        metadata: { role: "judge", self: true },
+        metadata: { role: EVENT_ROLE.JUDGE, self: true },
       });
     }
     return { eventRoleId: role.id };
@@ -111,7 +112,7 @@ export class JudgesService {
         and(
           eq(eventRoles.id, eventRoleId),
           eq(eventRoles.eventId, eventId),
-          eq(eventRoles.role, "judge"),
+          eq(eventRoles.role, EVENT_ROLE.JUDGE),
         ),
       );
     if (!role) {
@@ -136,7 +137,7 @@ export class JudgesService {
       action: AUDIT_ACTION.EVENT_ROLE_REVOKED,
       resourceType: "event_role",
       resourceId: eventRoleId,
-      metadata: { role: "judge", targetUserId: role.userId },
+      metadata: { role: EVENT_ROLE.JUDGE, targetUserId: role.userId },
     });
   }
 }

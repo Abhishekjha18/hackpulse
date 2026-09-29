@@ -5,7 +5,10 @@ import {
   type CreateSubmissionInput,
   type CurrentUser,
   ERROR_CODE,
+  EVENT_STATUS,
+  GALLERY_VISIBILITY,
   type SetCustomAnswersInput,
+  SUBMISSION_STATUS,
   type UpdateSubmissionInput,
   WEBHOOK_EVENT,
 } from "@hackpulse/shared";
@@ -180,7 +183,7 @@ export class SubmissionsService {
     resource: { resourceType: "event" | "submission"; resourceId: string },
   ) {
     if (event.submissionOpenAt === null) {
-      if (event.status === "submissions_open") {
+      if (event.status === EVENT_STATUS.SUBMISSIONS_OPEN) {
         return;
       }
       await this.audit.log({
@@ -284,20 +287,20 @@ export class SubmissionsService {
         .then((rows) => rows.length > 0));
     const isPrivileged = isMember || isEventOrganizer(currentUser, event.id);
 
-    if (submission.status === "draft" && !isPrivileged) {
+    if (submission.status === SUBMISSION_STATUS.DRAFT && !isPrivileged) {
       // Draft work in progress is never publicly visible, whatever the
       // event's gallery setting is.
       throw new NotFoundException();
     }
 
-    if (submission.status === "submitted" && !isPrivileged) {
+    if (submission.status === SUBMISSION_STATUS.SUBMITTED && !isPrivileged) {
       // FR-GAL-03 applies at the individual-submission level too, not just
       // the gallery listing — an unguessable id shouldn't be treated as a
       // visibility control on its own.
-      if (event.galleryVisibility === "hidden") {
+      if (event.galleryVisibility === GALLERY_VISIBILITY.HIDDEN) {
         throw new NotFoundException();
       }
-      if (event.galleryVisibility === "participants_only" && !currentUser) {
+      if (event.galleryVisibility === GALLERY_VISIBILITY.PARTICIPANTS_ONLY && !currentUser) {
         throw new NotFoundException();
       }
     }
@@ -338,7 +341,7 @@ export class SubmissionsService {
       );
     }
 
-    const wasSubmitted = submission.status === "submitted";
+    const wasSubmitted = submission.status === SUBMISSION_STATUS.SUBMITTED;
 
     const needsRehash =
       input.name !== undefined || input.description !== undefined || input.repoUrl !== undefined;
@@ -378,7 +381,7 @@ export class SubmissionsService {
   async submit(submissionId: string, currentUser: CurrentUser) {
     const { submission, event } = await this.assertCanEdit(submissionId, currentUser);
 
-    if (submission.status === "submitted") {
+    if (submission.status === SUBMISSION_STATUS.SUBMITTED) {
       throw new ConflictException({
         error: { code: ERROR_CODE.CONFLICT, message: "Already submitted" },
       });

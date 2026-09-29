@@ -1,6 +1,7 @@
 import {
   CreateTeamInput,
   type CurrentUser as CurrentUserType,
+  EVENT_ROLE,
   JoinTeamInput,
 } from "@hackpulse/shared";
 import { Body, Controller, Delete, Get, Param, Post } from "@nestjs/common";
@@ -24,7 +25,7 @@ export class TeamsController {
   }
 
   @Get("events/:eventId/teams")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   listForEvent(@Param("eventId") eventId: string) {
     return this.teams.listForEvent(eventId);
   }

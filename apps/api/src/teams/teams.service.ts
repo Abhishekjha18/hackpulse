@@ -1,4 +1,10 @@
-import { type CreateTeamInput, type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
+import {
+  type CreateTeamInput,
+  type CurrentUser,
+  ERROR_CODE,
+  EVENT_ROLE,
+  EVENT_STATUS,
+} from "@hackpulse/shared";
 import {
   ConflictException,
   ForbiddenException,
@@ -28,7 +34,7 @@ export class TeamsService {
   // is exactly "registration_open", the manual equivalent of the window.
   private assertRegistrationOpen(event: typeof events.$inferSelect) {
     if (event.registrationOpenAt === null) {
-      if (event.status !== "registration_open") {
+      if (event.status !== EVENT_STATUS.REGISTRATION_OPEN) {
         throw new ConflictException({
           error: {
             code: ERROR_CODE.REGISTRATION_NOT_OPEN,
@@ -61,7 +67,8 @@ export class TeamsService {
   private assertNotOrganizerOrJudge(currentUser: CurrentUser, eventId: string): void {
     if (
       currentUser.eventRoles.some(
-        (r) => r.eventId === eventId && (r.role === "organizer" || r.role === "judge"),
+        (r) =>
+          r.eventId === eventId && (r.role === EVENT_ROLE.ORGANIZER || r.role === EVENT_ROLE.JUDGE),
       )
     ) {
       throw new ConflictException({

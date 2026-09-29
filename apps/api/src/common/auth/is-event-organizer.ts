@@ -1,4 +1,4 @@
-import type { CurrentUser } from "@hackpulse/shared";
+import { type CurrentUser, EVENT_ROLE } from "@hackpulse/shared";
 
 // Was independently reimplemented across several services, most with an
 // isAdmin auto-bypass. That bypass is deliberately gone here: an admin
@@ -8,5 +8,5 @@ export function isEventOrganizer(user: CurrentUser | null, eventId: string): boo
   if (!user) {
     return false;
   }
-  return user.eventRoles.some((r) => r.eventId === eventId && r.role === "organizer");
+  return user.eventRoles.some((r) => r.eventId === eventId && r.role === EVENT_ROLE.ORGANIZER);
 }

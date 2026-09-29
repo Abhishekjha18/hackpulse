@@ -1,4 +1,10 @@
-import { type CreateCommentInput, type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
+import {
+  type CreateCommentInput,
+  type CurrentUser,
+  ERROR_CODE,
+  GALLERY_VISIBILITY,
+  SUBMISSION_STATUS,
+} from "@hackpulse/shared";
 import {
   ForbiddenException,
   HttpException,
@@ -27,7 +33,10 @@ export class CommentsService {
   // visible project. FR-ABUSE-01 — rate limited per author.
   async create(submissionId: string, input: CreateCommentInput, currentUser: CurrentUser) {
     const { submission, event } = await loadSubmissionWithEvent(this.db, submissionId);
-    if (submission.status !== "submitted" || event.galleryVisibility === "hidden") {
+    if (
+      submission.status !== SUBMISSION_STATUS.SUBMITTED ||
+      event.galleryVisibility === GALLERY_VISIBILITY.HIDDEN
+    ) {
       throw new NotFoundException();
     }
 

@@ -1,4 +1,13 @@
-import { AUDIT_ACTION, type CurrentUser, ERROR_CODE, WEBHOOK_EVENT } from "@hackpulse/shared";
+import {
+  AUDIT_ACTION,
+  type CurrentUser,
+  ERROR_CODE,
+  EVENT_STATUS,
+  JUDGE_ASSIGNMENT_STATUS,
+  SCORING_MODE,
+  SUBMISSION_STATUS,
+  WEBHOOK_EVENT,
+} from "@hackpulse/shared";
 import {
   ConflictException,
   ForbiddenException,
@@ -165,7 +174,7 @@ export class ResultsService {
       throw new NotFoundException();
     }
     if (
-      event.status !== "results_published" &&
+      event.status !== EVENT_STATUS.RESULTS_PUBLISHED &&
       !isEventOrganizer(currentUser, eventId) &&
       !currentUser?.isAdmin
     ) {
@@ -197,13 +206,13 @@ export class ResultsService {
       .select({ id: submissions.id, name: submissions.name })
       .from(submissions)
       .innerJoin(teams, eq(teams.id, submissions.teamId))
-      .where(and(eq(teams.eventId, eventId), eq(submissions.status, "submitted")));
+      .where(and(eq(teams.eventId, eventId), eq(submissions.status, SUBMISSION_STATUS.SUBMITTED)));
     if (submitted.length === 0) {
       return [];
     }
 
     const judgedIds = new Set<string>();
-    if (event.scoringMode === "pairwise") {
+    if (event.scoringMode === SCORING_MODE.PAIRWISE) {
       const rows = await this.db
         .select({ a: pairwiseComparisons.submissionAId, b: pairwiseComparisons.submissionBId })
         .from(pairwiseComparisons)
@@ -217,7 +226,10 @@ export class ResultsService {
         .select({ submissionId: judgeAssignments.submissionId })
         .from(judgeAssignments)
         .where(
-          and(eq(judgeAssignments.eventId, eventId), eq(judgeAssignments.status, "completed")),
+          and(
+            eq(judgeAssignments.eventId, eventId),
+            eq(judgeAssignments.status, JUDGE_ASSIGNMENT_STATUS.COMPLETED),
+          ),
         );
       for (const r of rows) {
         judgedIds.add(r.submissionId);
@@ -260,7 +272,7 @@ export class ResultsService {
     // has no judgingCloseAt to check, so it requires status to actually be
     // "judging" instead — the organizer-driven equivalent.
     if (event.judgingCloseAt === null) {
-      if (event.status !== "judging") {
+      if (event.status !== EVENT_STATUS.JUDGING) {
         throw new ConflictException({
           error: {
             code: ERROR_CODE.JUDGING_STILL_OPEN,
@@ -280,7 +292,7 @@ export class ResultsService {
     const [updated] = await this.db
       .update(events)
       .set({
-        status: "results_published",
+        status: EVENT_STATUS.RESULTS_PUBLISHED,
         resultsPublishAt: event.resultsPublishAt ?? new Date(),
         updatedAt: new Date(),
       })

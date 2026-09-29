@@ -1,4 +1,11 @@
-import { type CreateAssignmentsInput, ERROR_CODE } from "@hackpulse/shared";
+import {
+  type CreateAssignmentsInput,
+  ERROR_CODE,
+  EVENT_ROLE,
+  EVENT_STATUS,
+  JUDGE_ASSIGNMENT_STATUS,
+  SUBMISSION_STATUS,
+} from "@hackpulse/shared";
 import {
   BadRequestException,
   ConflictException,
@@ -102,7 +109,7 @@ export class AssignmentsService {
       throw new NotFoundException();
     }
     if (event.judgingOpenAt === null) {
-      if (event.status !== "judging") {
+      if (event.status !== EVENT_STATUS.JUDGING) {
         throw new ConflictException({
           error: {
             code: ERROR_CODE.JUDGING_NOT_STARTED,
@@ -223,7 +230,9 @@ export class AssignmentsService {
     const subs = await this.db
       .select()
       .from(submissions)
-      .where(and(eq(submissions.trackId, trackId), eq(submissions.status, "submitted")));
+      .where(
+        and(eq(submissions.trackId, trackId), eq(submissions.status, SUBMISSION_STATUS.SUBMITTED)),
+      );
 
     const judges = await this.judgeTrackScope.scopedJudgesForTrack(eventId, trackId);
     if (judges.length === 0) {
@@ -268,7 +277,7 @@ export class AssignmentsService {
       .select({ judgeUserId: eventRoles.userId, count: count() })
       .from(judgeTrackScopes)
       .innerJoin(eventRoles, eq(eventRoles.id, judgeTrackScopes.eventRoleId))
-      .where(and(eq(eventRoles.eventId, eventId), eq(eventRoles.role, "judge")))
+      .where(and(eq(eventRoles.eventId, eventId), eq(eventRoles.role, EVENT_ROLE.JUDGE)))
       .groupBy(eventRoles.userId);
     const scopeCountByJudge = new Map(scopeCounts.map((r) => [r.judgeUserId, r.count]));
 
@@ -360,7 +369,7 @@ export class AssignmentsService {
         completed: 0,
       };
       j.total += 1;
-      if (a.status === "completed") {
+      if (a.status === JUDGE_ASSIGNMENT_STATUS.COMPLETED) {
         j.completed += 1;
       }
       byJudge.set(a.judgeUserId, j);
@@ -371,7 +380,7 @@ export class AssignmentsService {
         completed: 0,
       };
       s.assigned += 1;
-      if (a.status === "completed") {
+      if (a.status === JUDGE_ASSIGNMENT_STATUS.COMPLETED) {
         s.completed += 1;
       }
       bySubmission.set(a.submissionId, s);
@@ -385,7 +394,7 @@ export class AssignmentsService {
       .select({ id: submissions.id })
       .from(submissions)
       .innerJoin(tracks, eq(tracks.id, submissions.trackId))
-      .where(and(eq(tracks.eventId, eventId), eq(submissions.status, "submitted")));
+      .where(and(eq(tracks.eventId, eventId), eq(submissions.status, SUBMISSION_STATUS.SUBMITTED)));
     const unassignedCount = submittedRows.filter((s) => !assignedSubmissionIds.has(s.id)).length;
 
     return {

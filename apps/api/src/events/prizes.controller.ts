@@ -1,4 +1,4 @@
-import { CreatePrizeInput, UpdatePrizeInput } from "@hackpulse/shared";
+import { CreatePrizeInput, EVENT_ROLE, UpdatePrizeInput } from "@hackpulse/shared";
 import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
 
 import { Public } from "../common/decorators/public.decorator";
@@ -11,7 +11,7 @@ export class PrizesController {
   constructor(private readonly prizes: PrizesService) {}
 
   @Post()
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   create(
     @Param("eventId") eventId: string,
     @Body(new ZodValidationPipe(CreatePrizeInput)) body: CreatePrizeInput,
@@ -26,7 +26,7 @@ export class PrizesController {
   }
 
   @Patch(":prizeId")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   update(
     @Param("eventId") eventId: string,
     @Param("prizeId") prizeId: string,
@@ -36,7 +36,7 @@ export class PrizesController {
   }
 
   @Delete(":prizeId")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   delete(@Param("eventId") eventId: string, @Param("prizeId") prizeId: string) {
     return this.prizes.delete(eventId, prizeId);
   }

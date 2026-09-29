@@ -1,5 +1,6 @@
 import {
   type CurrentUser as CurrentUserType,
+  EVENT_ROLE,
   InviteJudgeInput,
   SelfJudgeInput,
 } from "@hackpulse/shared";
@@ -22,7 +23,7 @@ export class JudgesController {
   constructor(private readonly judges: JudgesService) {}
 
   @Post("events/:eventId/judges")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   invite(
     @Param("eventId") eventId: string,
     @Body(new ZodValidationPipe(InviteJudgeInput)) body: InviteJudgeInput,
@@ -32,13 +33,13 @@ export class JudgesController {
   }
 
   @Get("events/:eventId/judges")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   list(@Param("eventId") eventId: string) {
     return this.judges.listForEvent(eventId);
   }
 
   @Post("events/:eventId/judges/self")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   selfJudge(
     @Param("eventId") eventId: string,
     @Body(new ZodValidationPipe(SelfJudgeInput)) body: SelfJudgeInput,
@@ -48,7 +49,7 @@ export class JudgesController {
   }
 
   @Delete("events/:eventId/judges/:eventRoleId")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   remove(
     @Param("eventId") eventId: string,
     @Param("eventRoleId") eventRoleId: string,

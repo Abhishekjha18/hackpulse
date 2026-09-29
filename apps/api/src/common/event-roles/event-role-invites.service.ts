@@ -33,7 +33,7 @@ import { JudgeTrackScopeService } from "../judge-track-scope.service";
 // accept/decline state machine either way. JudgesService delegates here
 // with role="judge" fixed; OrganizersController uses role="organizer"
 // directly. Callers own authorization for who can invite
-// (@Roles("organizer")); identity checks happen here since the invitee
+// (@Roles(EVENT_ROLE.ORGANIZER)); identity checks happen here since the invitee
 // isn't a role-holder yet.
 @Injectable()
 export class EventRoleInvitesService {

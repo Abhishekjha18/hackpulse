@@ -1,4 +1,4 @@
-import { type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
+import { type CurrentUser, ERROR_CODE, EVENT_ROLE } from "@hackpulse/shared";
 import { ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { eq, ilike, inArray } from "drizzle-orm";
 
@@ -245,7 +245,7 @@ export class ArchiveService {
 
       await tx
         .insert(eventRoles)
-        .values({ eventId: newEvent.id, userId: importingUser.id, role: "organizer" });
+        .values({ eventId: newEvent.id, userId: importingUser.id, role: EVENT_ROLE.ORGANIZER });
 
       const trackIdMap = new Map<string, string>();
       for (const t of archive.tracks ?? []) {
@@ -323,7 +323,7 @@ export class ArchiveService {
 
       const eventRoleIdMap = new Map<string, string>();
       for (const er of archive.eventRoles ?? []) {
-        if (er.role !== "judge" && er.role !== "organizer") {
+        if (er.role !== EVENT_ROLE.JUDGE && er.role !== EVENT_ROLE.ORGANIZER) {
           continue;
         }
         const newUserId = resolveUser(er.userId);
@@ -333,7 +333,7 @@ export class ArchiveService {
         // The importer was already granted organizer above; skip re-inserting
         // their own original row so co-organizers (everyone else) are what's
         // actually new here.
-        if (er.role === "organizer" && newUserId === importingUser.id) {
+        if (er.role === EVENT_ROLE.ORGANIZER && newUserId === importingUser.id) {
           continue;
         }
         const [ner] = await tx

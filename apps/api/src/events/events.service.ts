@@ -3,7 +3,11 @@ import {
   type CreateTrackInput,
   type CurrentUser,
   ERROR_CODE,
+  EVENT_ROLE,
+  EVENT_STATUS,
   type EventStatus,
+  JUDGE_ASSIGNMENT_STATUS,
+  SUBMISSION_STATUS,
   type UpdateEventInput,
 } from "@hackpulse/shared";
 import {
@@ -118,8 +122,8 @@ export function computeDisplayStatus(event: {
 }): EventStatus {
   if (
     lifecycleModeOf(event) === "manual" ||
-    event.status === "results_published" ||
-    event.status === "archived"
+    event.status === EVENT_STATUS.RESULTS_PUBLISHED ||
+    event.status === EVENT_STATUS.ARCHIVED
   ) {
     return event.status;
   }
@@ -128,7 +132,7 @@ export function computeDisplayStatus(event: {
   const submissionOpenAt = event.submissionOpenAt!;
   const judgingOpenAt = event.judgingOpenAt!;
   const now = Date.now();
-  if (event.status === "draft" && now < event.registrationOpenAt!.getTime()) {
+  if (event.status === EVENT_STATUS.DRAFT && now < event.registrationOpenAt!.getTime()) {
     return "draft";
   }
   if (now >= judgingOpenAt.getTime()) {
@@ -152,7 +156,7 @@ export function computeDisplayStatus(event: {
 // manual event's status).
 export function isVisibleCondition() {
   return or(
-    ne(events.status, "draft"),
+    ne(events.status, EVENT_STATUS.DRAFT),
     and(isNotNull(events.registrationOpenAt), sql`${events.registrationOpenAt} <= now()`),
   )!;
 }
@@ -161,7 +165,7 @@ export function isEventVisible(event: {
   registrationOpenAt: Date | null;
 }): boolean {
   return (
-    event.status !== "draft" ||
+    event.status !== EVENT_STATUS.DRAFT ||
     (event.registrationOpenAt !== null && event.registrationOpenAt.getTime() <= Date.now())
   );
 }
@@ -288,7 +292,7 @@ async function assertValidStatusTransition(
   if (requestedStatus === existing.status) {
     return;
   }
-  if (existing.status === "archived") {
+  if (existing.status === EVENT_STATUS.ARCHIVED) {
     throw new ConflictException({
       error: {
         code: ERROR_CODE.EVENT_ARCHIVED,
@@ -305,7 +309,7 @@ async function assertValidStatusTransition(
     });
   }
   if (requestedStatus === "archived") {
-    if (existing.status !== "results_published") {
+    if (existing.status !== EVENT_STATUS.RESULTS_PUBLISHED) {
       throw new ConflictException({
         error: {
           code: ERROR_CODE.RESULTS_NOT_PUBLISHED,
@@ -324,7 +328,7 @@ async function assertValidStatusTransition(
     // values is picked doesn't matter afterward — displayStatus overrides
     // to the actually-correct one on the very next read regardless.
     const isMakingPublic =
-      existing.status === "draft" &&
+      existing.status === EVENT_STATUS.DRAFT &&
       (["registration_open", "submissions_open", "judging"] as EventStatus[]).includes(
         requestedStatus,
       );
@@ -347,7 +351,9 @@ async function assertValidStatusTransition(
         .select({ id: submissions.id })
         .from(submissions)
         .innerJoin(teams, eq(teams.id, submissions.teamId))
-        .where(and(eq(teams.eventId, existing.id), eq(submissions.status, "submitted")))
+        .where(
+          and(eq(teams.eventId, existing.id), eq(submissions.status, SUBMISSION_STATUS.SUBMITTED)),
+        )
         .limit(1);
       if (submitted) {
         throw new ConflictException({
@@ -363,7 +369,10 @@ async function assertValidStatusTransition(
         .select({ id: judgeAssignments.id })
         .from(judgeAssignments)
         .where(
-          and(eq(judgeAssignments.eventId, existing.id), eq(judgeAssignments.status, "completed")),
+          and(
+            eq(judgeAssignments.eventId, existing.id),
+            eq(judgeAssignments.status, JUDGE_ASSIGNMENT_STATUS.COMPLETED),
+          ),
         )
         .limit(1);
       const [compared] = await db
@@ -456,7 +465,7 @@ export class EventsService {
       await tx.insert(eventRoles).values({
         eventId: event.id,
         userId: ownerUserId,
-        role: "organizer",
+        role: EVENT_ROLE.ORGANIZER,
       });
 
       return { ...event, displayStatus: computeDisplayStatus(event) };
@@ -519,9 +528,9 @@ export class EventsService {
     // action (assertValidStatusTransition requires results_published
     // first), so it alone is both modes' honest "past" signal.
     if (opts.phase === "active") {
-      conditions.push(ne(events.status, "archived"));
+      conditions.push(ne(events.status, EVENT_STATUS.ARCHIVED));
     } else if (opts.phase === "past") {
-      conditions.push(eq(events.status, "archived"));
+      conditions.push(eq(events.status, EVENT_STATUS.ARCHIVED));
     } else if (opts.phase === "mine" && currentUser) {
       // "Mine" = organizer or judge (eventRoles) OR a team member on the
       // event (teamMembers carries no role of its own — a participant's
@@ -574,7 +583,12 @@ export class EventsService {
             .select({ eventId: teams.eventId, value: count() })
             .from(submissions)
             .innerJoin(teams, eq(teams.id, submissions.teamId))
-            .where(and(inArray(teams.eventId, eventIds), eq(submissions.status, "submitted")))
+            .where(
+              and(
+                inArray(teams.eventId, eventIds),
+                eq(submissions.status, SUBMISSION_STATUS.SUBMITTED),
+              ),
+            )
             .groupBy(teams.eventId),
           this.db
             .select({ eventId: prizes.eventId, name: prizes.name })
@@ -627,12 +641,12 @@ export class EventsService {
         .from(submissions)
         .innerJoin(teams, eq(teams.id, submissions.teamId))
         .innerJoin(events, eq(events.id, teams.eventId))
-        .where(and(eq(submissions.status, "submitted"), isVisibleCondition())),
+        .where(and(eq(submissions.status, SUBMISSION_STATUS.SUBMITTED), isVisibleCondition())),
       this.db
         .select({ value: countDistinct(eventRoles.userId) })
         .from(eventRoles)
         .innerJoin(events, eq(events.id, eventRoles.eventId))
-        .where(and(eq(eventRoles.role, "judge"), isVisibleCondition())),
+        .where(and(eq(eventRoles.role, EVENT_ROLE.JUDGE), isVisibleCondition())),
       this.db
         .select({ value: count() })
         .from(teams)

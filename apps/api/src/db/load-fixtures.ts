@@ -4,6 +4,15 @@ import "reflect-metadata";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import {
+  EVENT_ROLE,
+  EVENT_STATUS,
+  GALLERY_VISIBILITY,
+  SCORE_STATUS,
+  SCORING_MODE,
+  VOTING_ACCESS,
+  VOTING_MODE,
+} from "@hackpulse/shared";
 import { and, eq } from "drizzle-orm";
 
 import { auth } from "../auth/auth.config";
@@ -30,7 +39,6 @@ import {
   tracks,
   user,
 } from "./schema";
-
 /**
  * Loads DOGFOOD-SPEC.md's shared fixture data (fixtures.json) into the
  * database on every boot. Every team's portal is meant to hold the same
@@ -115,7 +123,7 @@ async function createUser(
 async function addJudge(eventId: string, judgeUserId: string, trackIds: string[]) {
   const [role] = await db
     .insert(eventRoles)
-    .values({ eventId, userId: judgeUserId, role: "judge" })
+    .values({ eventId, userId: judgeUserId, role: EVENT_ROLE.JUDGE })
     .returning();
   if (trackIds.length > 0) {
     await db
@@ -157,7 +165,7 @@ async function recomputeNormalization(rubricId: string): Promise<void> {
     })
     .from(scores)
     .innerJoin(judgeAssignments, eq(judgeAssignments.id, scores.judgeAssignmentId))
-    .where(and(eq(scores.rubricId, rubricId), eq(scores.status, "submitted")));
+    .where(and(eq(scores.rubricId, rubricId), eq(scores.status, SCORE_STATUS.SUBMITTED)));
 
   const ranked = computeNormalizedRanking(submitted, computeJudgeStats(groupByJudge(submitted)));
 
@@ -221,17 +229,17 @@ async function main() {
       submissionCloseAt: new Date(fixture.event.submissions_close),
       judgingOpenAt: new Date("2026-09-20T00:00:00Z"),
       judgingCloseAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-      status: "judging",
-      galleryVisibility: "open",
-      votingMode: "disabled",
-      votingAccess: "authenticated",
-      scoringMode: "rubric",
+      status: EVENT_STATUS.JUDGING,
+      galleryVisibility: GALLERY_VISIBILITY.OPEN,
+      votingMode: VOTING_MODE.DISABLED,
+      votingAccess: VOTING_ACCESS.AUTHENTICATED,
+      scoringMode: SCORING_MODE.RUBRIC,
       maxTeamSize: 4,
     })
     .returning();
   await db
     .insert(eventRoles)
-    .values({ eventId: event.id, userId: organizer.id, role: "organizer" });
+    .values({ eventId: event.id, userId: organizer.id, role: EVENT_ROLE.ORGANIZER });
 
   const trackIdMap = new Map<string, string>();
   for (const [i, t] of fixture.tracks.entries()) {

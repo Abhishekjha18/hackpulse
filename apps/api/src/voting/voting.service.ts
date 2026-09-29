@@ -1,4 +1,13 @@
-import { AUDIT_ACTION, type CastVoteInput, type CurrentUser, ERROR_CODE } from "@hackpulse/shared";
+import {
+  AUDIT_ACTION,
+  type CastVoteInput,
+  type CurrentUser,
+  ERROR_CODE,
+  EVENT_STATUS,
+  SUBMISSION_STATUS,
+  VOTING_ACCESS,
+  VOTING_MODE,
+} from "@hackpulse/shared";
 import {
   BadRequestException,
   ConflictException,
@@ -85,13 +94,13 @@ export class VotingService {
       return { voterId: `user:${currentUser.id}`, isAuthenticated: true };
     }
 
-    if (event.votingAccess === "authenticated") {
+    if (event.votingAccess === VOTING_ACCESS.AUTHENTICATED) {
       throw new ForbiddenException({
         error: { code: ERROR_CODE.FORBIDDEN, message: "This event requires an account to vote" },
       });
     }
 
-    if (event.votingAccess === "email_gated") {
+    if (event.votingAccess === VOTING_ACCESS.EMAIL_GATED) {
       const normalized = voterEmail?.trim().toLowerCase();
       if (!normalized || !EMAIL_PATTERN.test(normalized)) {
         throw new BadRequestException({
@@ -172,7 +181,7 @@ export class VotingService {
       .select({ submission: submissions })
       .from(submissions)
       .innerJoin(teams, eq(teams.id, submissions.teamId))
-      .where(and(eq(teams.eventId, eventId), eq(submissions.status, "submitted")));
+      .where(and(eq(teams.eventId, eventId), eq(submissions.status, SUBMISSION_STATUS.SUBMITTED)));
 
     const list = rows.map((r) => r.submission);
     return seededShuffle(list, `${eventId}|${voter.voterId}`);
@@ -190,7 +199,7 @@ export class VotingService {
     if (!event) {
       throw new NotFoundException();
     }
-    if (event.votingMode === "disabled") {
+    if (event.votingMode === VOTING_MODE.DISABLED) {
       throw new ForbiddenException({
         error: { code: ERROR_CODE.FORBIDDEN, message: "Voting is not enabled for this event" },
       });
@@ -232,7 +241,7 @@ export class VotingService {
       .select()
       .from(submissions)
       .where(eq(submissions.id, input.submissionId));
-    if (!submission || submission.status !== "submitted") {
+    if (!submission || submission.status !== SUBMISSION_STATUS.SUBMITTED) {
       throw new NotFoundException();
     }
 
@@ -241,7 +250,7 @@ export class VotingService {
     let votesCast = 1;
     let cost = 1;
 
-    if (event.votingMode === "single_vote") {
+    if (event.votingMode === VOTING_MODE.SINGLE_VOTE) {
       if (input.votes !== 1) {
         throw new BadRequestException({
           error: {
@@ -310,7 +319,7 @@ export class VotingService {
     if (!event) {
       throw new NotFoundException();
     }
-    if (event.status !== "results_published" && !isPrivileged) {
+    if (event.status !== EVENT_STATUS.RESULTS_PUBLISHED && !isPrivileged) {
       throw new ForbiddenException();
     }
 

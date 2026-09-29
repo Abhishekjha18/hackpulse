@@ -1,4 +1,9 @@
-import { AUDIT_ACTION, type CurrentUser as CurrentUserType, ERROR_CODE } from "@hackpulse/shared";
+import {
+  AUDIT_ACTION,
+  type CurrentUser as CurrentUserType,
+  ERROR_CODE,
+  EVENT_ROLE,
+} from "@hackpulse/shared";
 import { BadRequestException, Body, Controller, Get, Param, Post, Res } from "@nestjs/common";
 import type { FastifyReply } from "fastify";
 
@@ -67,7 +72,7 @@ export class BulkExportController {
   // Declared before the parameterized :resourceWithExt route for clarity;
   // Fastify's router prioritizes the static segment regardless.
   @Get("export/archive")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   async exportArchive(@Param("eventId") eventId: string, @CurrentUser() user: CurrentUserType) {
     const result = await this.archive.exportArchive(eventId);
     // FR-ABUSE-05 "export" — logged after the export actually succeeds.
@@ -89,7 +94,7 @@ export class BulkExportController {
   // literal dot in the route template, which not every router handles the
   // same way.
   @Get("export/:resourceWithExt")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   async exportCsv(
     @Param("eventId") eventId: string,
     @Param("resourceWithExt") resourceWithExt: string,
@@ -141,7 +146,7 @@ export class BulkExportController {
   // pulling in a multipart-parsing dependency for a single upload
   // endpoint.
   @Post("import/:resource")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   async importCsv(
     @Param("eventId") eventId: string,
     @Param("resource") resource: string,

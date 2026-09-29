@@ -1,7 +1,11 @@
 import { createReadStream } from "node:fs";
 import { join } from "node:path";
 
-import { type CurrentUser as CurrentUserType, GenerateCertificatesInput } from "@hackpulse/shared";
+import {
+  type CurrentUser as CurrentUserType,
+  EVENT_ROLE,
+  GenerateCertificatesInput,
+} from "@hackpulse/shared";
 import { Body, Controller, Get, Param, Post, Res, StreamableFile } from "@nestjs/common";
 import type { FastifyReply } from "fastify";
 
@@ -16,7 +20,7 @@ export class CertificatesController {
   constructor(private readonly certificates: CertificatesService) {}
 
   @Post("events/:eventId/certificates/generate")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   generate(
     @Param("eventId") eventId: string,
     @Body(new ZodValidationPipe(GenerateCertificatesInput)) body: GenerateCertificatesInput,

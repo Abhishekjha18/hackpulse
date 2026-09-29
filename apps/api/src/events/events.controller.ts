@@ -2,6 +2,7 @@ import {
   CreateEventInput,
   CreateTrackInput,
   type CurrentUser as CurrentUserType,
+  EVENT_ROLE,
   UpdateEventInput,
 } from "@hackpulse/shared";
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
@@ -65,7 +66,7 @@ export class EventsController {
   }
 
   @Patch(":eventId")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   update(
     @Param("eventId") eventId: string,
     @Body(new ZodValidationPipe(UpdateEventInput)) body: UpdateEventInput,
@@ -80,7 +81,7 @@ export class EventsController {
   }
 
   @Post(":eventId/tracks")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   createTrack(
     @Param("eventId") eventId: string,
     @Body(new ZodValidationPipe(CreateTrackInput)) body: CreateTrackInput,
@@ -89,7 +90,7 @@ export class EventsController {
   }
 
   @Delete(":eventId/tracks/:trackId")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   deleteTrack(@Param("eventId") eventId: string, @Param("trackId") trackId: string) {
     return this.events.deleteTrack(eventId, trackId);
   }

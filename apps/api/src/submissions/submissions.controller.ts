@@ -1,6 +1,7 @@
 import {
   CreateSubmissionInput,
   type CurrentUser as CurrentUserType,
+  EVENT_ROLE,
   SetCustomAnswersInput,
   UpdateSubmissionInput,
 } from "@hackpulse/shared";
@@ -27,7 +28,7 @@ export class SubmissionsController {
 
   // FR-ABUSE-02/03 — organizer-facing duplicate-content report.
   @Get("events/:eventId/submissions/duplicates")
-  @Roles("organizer")
+  @Roles(EVENT_ROLE.ORGANIZER)
   duplicates(@Param("eventId") eventId: string) {
     return this.submissions.findDuplicates(eventId);
   }

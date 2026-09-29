@@ -31,7 +31,7 @@ export class AuditController {
     private readonly audit: AuditService,
   ) {}
 
-  // Deliberately not @Roles("organizer"): admin gets a read-only bypass
+  // Deliberately not @Roles(EVENT_ROLE.ORGANIZER): admin gets a read-only bypass
   // here, the oversight capability needed to investigate a dispute without
   // full organizer control over someone else's event.
   // FR-ROLE-06: the 403 below is a deny decision on a sensitive resource

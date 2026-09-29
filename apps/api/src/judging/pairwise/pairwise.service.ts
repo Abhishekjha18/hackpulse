@@ -1,4 +1,4 @@
-import { ERROR_CODE, type PairwiseCompareInput } from "@hackpulse/shared";
+import { ERROR_CODE, type PairwiseCompareInput, SUBMISSION_STATUS } from "@hackpulse/shared";
 import {
   BadRequestException,
   ConflictException,
@@ -31,7 +31,9 @@ export class PairwiseService {
     const subs = await this.db
       .select()
       .from(submissions)
-      .where(and(eq(submissions.trackId, trackId), eq(submissions.status, "submitted")));
+      .where(
+        and(eq(submissions.trackId, trackId), eq(submissions.status, SUBMISSION_STATUS.SUBMITTED)),
+      );
     if (subs.length < 2) {
       throw new BadRequestException({
         error: {
@@ -123,7 +125,9 @@ export class PairwiseService {
     const subs = await this.db
       .select({ id: submissions.id })
       .from(submissions)
-      .where(and(eq(submissions.trackId, trackId), eq(submissions.status, "submitted")));
+      .where(
+        and(eq(submissions.trackId, trackId), eq(submissions.status, SUBMISSION_STATUS.SUBMITTED)),
+      );
     const n = subs.length;
     return n >= 2 ? (n * (n - 1)) / 2 : 0;
   }
@@ -273,7 +277,9 @@ export class PairwiseService {
     const subs = await this.db
       .select({ id: submissions.id })
       .from(submissions)
-      .where(and(eq(submissions.trackId, trackId), eq(submissions.status, "submitted")));
+      .where(
+        and(eq(submissions.trackId, trackId), eq(submissions.status, SUBMISSION_STATUS.SUBMITTED)),
+      );
     const items = subs.map((s) => s.id);
     if (items.length === 0) {
       return;

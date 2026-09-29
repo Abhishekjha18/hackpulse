@@ -1,4 +1,9 @@
-import type { CurrentUser } from "@hackpulse/shared";
+import {
+  type CurrentUser,
+  EVENT_ROLE,
+  GALLERY_VISIBILITY,
+  SUBMISSION_STATUS,
+} from "@hackpulse/shared";
 import { Inject, Injectable } from "@nestjs/common";
 import { and, eq, ilike, inArray, or } from "drizzle-orm";
 
@@ -44,7 +49,9 @@ export class SearchService {
     );
     const term = `%${query}%`;
     const ownedEventIds = new Set(
-      currentUser?.eventRoles.filter((r) => r.role === "organizer").map((r) => r.eventId) ?? [],
+      currentUser?.eventRoles
+        .filter((r) => r.role === EVENT_ROLE.ORGANIZER)
+        .map((r) => r.eventId) ?? [],
     );
 
     // Events: same visibility rule as EventsService.list (isVisibleCondition
@@ -110,7 +117,7 @@ export class SearchService {
       .innerJoin(events, eq(events.id, teams.eventId))
       .where(
         and(
-          eq(submissions.status, "submitted"),
+          eq(submissions.status, SUBMISSION_STATUS.SUBMITTED),
           or(
             ilike(submissions.name, term),
             ilike(submissions.tagline, term),
@@ -123,10 +130,10 @@ export class SearchService {
     const visibleSubmissions = naturalSortBy(
       submissionCandidates.filter((s) => {
         const isPrivileged = ownedEventIds.has(s.eventId);
-        if (s.galleryVisibility === "hidden") {
+        if (s.galleryVisibility === GALLERY_VISIBILITY.HIDDEN) {
           return isPrivileged;
         }
-        if (s.galleryVisibility === "participants_only") {
+        if (s.galleryVisibility === GALLERY_VISIBILITY.PARTICIPANTS_ONLY) {
           return !!currentUser || isPrivileged;
         }
         return true;
